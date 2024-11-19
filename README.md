@@ -1,2 +1,3 @@
 # gradio-experiments
-Experimentation with Gradio features.
+
+A collection of feature experiments with Gradio.
