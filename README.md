@@ -1,3 +1,17 @@
+---
+title: gradio-experiments
+emoji: 🔬
+colorFrom: gray
+colorTo: blue
+sdk: gradio
+sdk_version: 5.6.0
+suggested_hardware: cpu-basic
+app_file: src/app.py
+pinned: true
+disable_embedding: true
+license: gpl-3.0
+---
+
 # gradio-experiments
 
 A collection of feature experiments with Gradio.
