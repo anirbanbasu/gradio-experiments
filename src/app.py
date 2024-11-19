@@ -270,7 +270,7 @@ class GradioApp:
                     2. Change the global state in one browser (by clicking the 'Change global state' button) and see the changes reflected in the other browser (by clicking the 'Refresh states' button).
                     3. Change the user state in one browser (by clicking the 'Change user state' button) and see that the changes are **not** reflected in the other browser (by clicking the 'Refresh states' button).
 
-                    Notice that the 'Task output' is is the result of a task performed by an object, which is maintained as a reference in the global and user states. Thus, the task output is shared across all sessions even if it is triggered by a user state change.
+                    Notice that the 'Task output' is the result of a task performed by an object, which is maintained as a reference in the global and user states. Thus, the task output is shared across all sessions even whether it is triggered by a user state change or a global state change.
                     """
                 )
                 self.component_state_management()
