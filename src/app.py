@@ -154,7 +154,7 @@ class GradioApp:
                 label="Task output",
                 value={
                     f"global: {global_state.value.an_object.task_output}": 1.0,
-                    f"user: {user_state.value.an_object.task_output if user_state.value else "uninitialised"}": 1.0,
+                    f"user: {user_state.value.an_object.task_output if user_state.value else 'uninitialised'}": 1.0,
                 },
             )
 
@@ -186,7 +186,7 @@ class GradioApp:
             ic(global_state)
             return global_state.value.__dict__, {
                 f"global: {global_state.value.an_object.task_output}": 1.0,
-                f"user: {user_state.value.an_object.task_output if user_state.value else "uninitialised"}": 1.0,
+                f"user: {user_state.value.an_object.task_output if user_state.value else 'uninitialised'}": 1.0,
             }
 
         @btn_change_user_state.click(
@@ -219,7 +219,7 @@ class GradioApp:
             ic(user_state)
             return user_state.value.__dict__, {
                 f"global: {global_state.value.an_object.task_output}": 1.0,
-                f"user: {user_state.value.an_object.task_output if user_state.value else "uninitialised"}": 1.0,
+                f"user: {user_state.value.an_object.task_output if user_state.value else 'uninitialised'}": 1.0,
             }
 
         @btn_refresh_states.click(
@@ -233,7 +233,7 @@ class GradioApp:
                 (user_state.value.__dict__ if user_state.value else None),
                 {
                     f"global: {global_state.value.an_object.task_output}": 1.0,
-                    f"user: {user_state.value.an_object.task_output if user_state.value else "uninitialised"}": 1.0,
+                    f"user: {user_state.value.an_object.task_output if user_state.value else 'uninitialised'}": 1.0,
                 },
             )
 
