@@ -282,5 +282,5 @@ class GradioApp:
 if __name__ == "__main__":
     app = GradioApp()
     app.construct_ui().queue().launch(
-        show_error=True, show_api=True, debug=True, share=False
+        server_name="0.0.0.0", show_error=True, show_api=True, debug=True, share=False
     )
