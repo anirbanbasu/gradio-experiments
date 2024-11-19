@@ -71,7 +71,9 @@ class StateData:
         newone.__dict__.update(self.__dict__)
         newone.a_list = []
         newone.a_dict = {}
+        # Get the reference to the original object.
         # Notice that self.an_object is not created again and is shared between the original and the new object.
+        newone.an_object = self.an_object
         # ic(self.__dict__, newone.__dict__)
         return newone
 
