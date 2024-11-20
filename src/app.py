@@ -16,6 +16,7 @@
 
 
 import sys
+import platform
 from typing import Dict, List, Optional
 import gradio as gr
 from pydantic import BaseModel, Field
@@ -336,6 +337,7 @@ class GradioApp:
 
                  - Gradio version: _{gr.get_package_version()}_
                  - Python version: _{sys.version}_
+                 - Platform: _{platform.version()}_
                  - GitHub repository: _[gradio-experiments](https://github.com/anirbanbasu/gradio-experiments)_
                 """
             )
