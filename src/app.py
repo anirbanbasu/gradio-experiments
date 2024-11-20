@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import sys
 from typing import Dict, List, Optional
 import gradio as gr
 from pydantic import BaseModel, Field
@@ -328,17 +329,21 @@ class GradioApp:
             analytics_enabled=False,
         ) as ui:
             gr.Markdown(
-                """
+                f"""
                 # gradio-experiments
 
                 A collection of feature experiments with Gradio.
+
+                 - Gradio version: _{gr.get_package_version()}_
+                 - Python version: _{sys.version}_
+                 - GitHub repository: _[gradio-experiments](https://github.com/anirbanbasu/gradio-experiments)_
                 """
             )
             with gr.Tab(label="State management"):
                 with gr.Accordion(label="Explanation", open=True):
                     gr.Markdown(
                         """
-                        This component demonstrates the management of global state (using `gr.State`) and user state (using `gr.BrowserState`).
+                        This component demonstrates the management of global state, session state (using `gr.State`) and browser state (using `gr.BrowserState`).
 
                         ## Expected behaviour
 
