@@ -49,32 +49,33 @@ class SomeTask:
 class StateData:
     """A class to hold the state data for the application."""
 
-    def __init__(self, create_uninitialised: bool = False):
+    def __init__(self, create_uninitialised: bool = False, an_object: SomeTask = None):
         """
         Create a new instance of the StateData class.
 
         Args:
             create_uninitialised (bool): Whether to create the object with uninitialised values. Defaults to False.
+            an_object (SomeTask): An instance of the SomeTask class. Defaults to None. Specifying this has no effect if create_uninitialised is True.
         """
         if not create_uninitialised:
             self.a_pydantic_object = SomePydanticModel(a=1, b="default", c=[1, 2, 3, 4])
-            self.an_object = SomeTask()
+            self.an_object = SomeTask() if an_object is None else an_object
+            self.a_list: List[SomePydanticModel] = []
+            self.a_dict: Dict[str, SomePydanticModel] = {}
         else:
+            self.a_list: List[SomePydanticModel] = None
+            self.a_dict: Dict[str, SomePydanticModel] = None
             self.a_pydantic_object = None
             self.an_object = None
-        self.a_list: List[SomePydanticModel] = []
-        self.a_dict: Dict[str, SomePydanticModel] = {}
-        # And so on
 
     def __deepcopy__(self, memo):
-        newone = type(self)(create_uninitialised=True)
-        newone.__dict__.update(self.__dict__)
-        newone.a_list = []
-        newone.a_dict = {}
-        # Get the reference to the original object.
-        # Notice that self.an_object is not created again and is shared between the original and the new object.
+        cls = self.__class__
+        newone = cls.__new__(cls)
+        newone.a_pydantic_object = copy.deepcopy(self.a_pydantic_object, memo=memo)
+        newone.a_list = copy.deepcopy(self.a_list, memo=memo)
+        newone.a_dict = copy.deepcopy(self.a_dict, memo=memo)
+        # Notice that newone.an_object is not created again and is shared between the original and the new object.
         newone.an_object = self.an_object
-        # ic(self.__dict__, newone.__dict__)
         return newone
 
 
@@ -198,7 +199,7 @@ class GradioApp:
         )
         def change_user_state():
             if user_state.value is None:
-                user_state.value = copy.deepcopy(global_state.value)
+                user_state.value = StateData(an_object=global_state.value.an_object)
             user_state.value.a_list.append(
                 SomePydanticModel(
                     a=random.randint(0, 99),
