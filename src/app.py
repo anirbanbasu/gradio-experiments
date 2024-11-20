@@ -57,6 +57,7 @@ class StateData:
             create_uninitialised (bool): Whether to create the object with uninitialised values. Defaults to False.
             an_object (SomeTask): An instance of the SomeTask class. Defaults to None. Specifying this has no effect if create_uninitialised is True.
         """
+
         if not create_uninitialised:
             self.a_pydantic_object = SomePydanticModel(a=1, b="default", c=[1, 2, 3, 4])
             self.an_object = SomeTask() if an_object is None else an_object
@@ -67,6 +68,39 @@ class StateData:
             self.a_dict: Dict[str, SomePydanticModel] = None
             self.a_pydantic_object = None
             self.an_object = None
+
+    def __iter__(self):
+        """Make the object JSON serializable by converting it into a dictionary."""
+        return iter(self.to_dict().items())
+
+    def to_dict(self):
+        """Converts the object into a dictionary representation."""
+        return {
+            "a_pydantic_object": (
+                self.a_pydantic_object.model_dump() if self.a_pydantic_object else None
+            ),
+            "an_object": str(self.an_object) if self.an_object else None,
+            "a_list": (
+                [item.model_dump() for item in self.a_list] if self.a_list else None
+            ),
+            "a_dict": (
+                {k: v.model_dump() for k, v in self.a_dict.items()}
+                if self.a_dict
+                else None
+            ),
+        }
+
+    def __getitem__(self, key):
+        """Allow dictionary-style access."""
+        return self.to_dict()[key]
+
+    def __str__(self):
+        """String representation."""
+        return str(self.to_dict())
+
+    def __repr__(self):
+        """Representation."""
+        return repr(self.to_dict())
 
     def __deepcopy__(self, memo):
         cls = self.__class__
@@ -83,6 +117,8 @@ class GradioApp:
     def __init__(self):
         # This is a safe global variable because it remains the same for all users and is never modified.
         self.app_name = "gradio-experiments"
+
+        self.global_state = StateData()
 
     def component_text_transformation(self) -> gr.Group:
         with gr.Group() as component:
@@ -126,40 +162,44 @@ class GradioApp:
 
     def component_state_management(self) -> gr.Group:
         with gr.Group() as component:
-            global_state = gr.State(
-                StateData(),
+            session_state = gr.State(
+                StateData(an_object=self.global_state.an_object),
             )
-            user_state = gr.BrowserState(
+            browser_state = gr.BrowserState(
+                # default_value=json.dumps(self.global_state, indent=2, default=vars),
                 storage_key="gradio-experiments-user-state",
             )
             with gr.Row(equal_height=True):
                 json_global_state = gr.JSON(
-                    value=global_state.value.__dict__, label="Global state"
+                    value=self.global_state.__dict__, label="Global state"
                 )
-                json_user_state = gr.JSON(
-                    value=(user_state.value.__dict__ if user_state.value else None),
-                    label="User local state",
+                json_session_state = gr.JSON(
+                    value=session_state.value.__dict__, label="Session state"
                 )
-                with gr.Column():
-                    btn_change_global_state = gr.Button(
-                        value="Change global state",
-                        variant="primary",
-                    )
-                    btn_change_user_state = gr.Button(
-                        value="Change user state",
-                        variant="secondary",
-                    )
-                    btn_refresh_states = gr.Button(
-                        value="Refresh states",
-                        variant="huggingface",
-                    )
+                json_browser_state = gr.JSON(
+                    value=None,
+                    label="Browser state",
+                )
             label_task_output = gr.Label(
                 label="Task output",
-                value={
-                    f"global: {global_state.value.an_object.task_output}": 1.0,
-                    f"user: {user_state.value.an_object.task_output if user_state.value else 'uninitialised'}": 1.0,
-                },
             )
+            with gr.Row(equal_height=True):
+                btn_change_global_state = gr.Button(
+                    value="Change global state",
+                    variant="primary",
+                )
+                btn_change_session_state = gr.Button(
+                    value="Change session state",
+                    variant="secondary",
+                )
+                btn_change_browser_state = gr.Button(
+                    value="Change browser state",
+                    variant="huggingface",
+                )
+                btn_refresh_states = gr.Button(
+                    value="Refresh states",
+                    variant="stop",
+                )
 
         @btn_change_global_state.click(
             inputs=[],
@@ -167,7 +207,7 @@ class GradioApp:
             api_name="change_global_state",
         )
         def change_global_state():
-            global_state.value.a_list.append(
+            self.global_state.a_list.append(
                 SomePydanticModel(
                     a=random.randint(0, 99),
                     b="changed-global",
@@ -175,68 +215,106 @@ class GradioApp:
                 )
             )
             random_key = f"key-{random.randint(0, 9999)}"
-            global_state.value.a_dict[random_key] = SomePydanticModel(
+            self.global_state.a_dict[random_key] = SomePydanticModel(
                 a=random.randint(0, 999),
                 b="changed-global",
                 c=[i for i in range(random.randint(0, 9))],
             )
-            global_state.value.a_pydantic_object = SomePydanticModel(
+            self.global_state.a_pydantic_object = SomePydanticModel(
                 a=random.randint(0, 499),
                 b="changed-global",
                 c=[i for i in range(random.randint(0, 9))],
             )
-            global_state.value.an_object.do_task()
-            ic(global_state)
-            return global_state.value.__dict__, {
-                f"global: {global_state.value.an_object.task_output}": 1.0,
-                f"user: {user_state.value.an_object.task_output if user_state.value else 'uninitialised'}": 1.0,
+            self.global_state.an_object.do_task()
+            return self.global_state.__dict__, {
+                f"global: {self.global_state.an_object.task_output}": 1.0,
+                f"session: {session_state.value.an_object.task_output}": 1.0,
+                f"browser: {browser_state.value.an_object.task_output if browser_state.value else 'uninitialised'}": 1.0,
             }
 
-        @btn_change_user_state.click(
+        @btn_change_session_state.click(
             inputs=[],
-            outputs=[json_user_state, label_task_output],
-            api_name="change_user_state",
+            outputs=[json_session_state, label_task_output],
+            api_name="change_session_state",
         )
-        def change_user_state():
-            if user_state.value is None:
-                user_state.value = StateData(an_object=global_state.value.an_object)
-            user_state.value.a_list.append(
+        def change_session_state():
+            session_state.value.a_list.append(
                 SomePydanticModel(
                     a=random.randint(0, 99),
-                    b="changed-user",
+                    b="changed-session",
+                    c=[i for i in range(random.randint(0, 9))],
+                )
+            )
+            random_key = f"key-{random.randint(0, 9999)}"
+            session_state.value.a_dict[random_key] = SomePydanticModel(
+                a=random.randint(0, 999),
+                b="changed-session",
+                c=[i for i in range(random.randint(0, 9))],
+            )
+            session_state.value.a_pydantic_object = SomePydanticModel(
+                a=random.randint(0, 499),
+                b="changed-session",
+                c=[i for i in range(random.randint(0, 9))],
+            )
+            session_state.value.an_object.do_task()
+            return session_state.value.__dict__, {
+                f"global: {self.global_state.an_object.task_output}": 1.0,
+                f"session: {session_state.value.an_object.task_output}": 1.0,
+                f"browser: {browser_state.value.an_object.task_output if browser_state.value else 'uninitialised'}": 1.0,
+            }
+
+        @btn_change_browser_state.click(
+            inputs=[],
+            outputs=[json_browser_state, label_task_output],
+            api_name="change_browser_state",
+        )
+        def change_browser_state():
+            if browser_state.value is None:
+                browser_state.value = StateData(an_object=self.global_state.an_object)
+            browser_state.value.a_list.append(
+                SomePydanticModel(
+                    a=random.randint(0, 99),
+                    b="changed-browser",
                     c=[i for i in range(random.randint(0, 5))],
                 )
             )
             random_key = f"key-{random.randint(0, 9999)}"
-            user_state.value.a_dict[random_key] = SomePydanticModel(
+            browser_state.value.a_dict[random_key] = SomePydanticModel(
                 a=random.randint(0, 999),
-                b="changed-user",
+                b="changed-browser",
                 c=[i for i in range(random.randint(0, 5))],
             )
-            user_state.value.a_pydantic_object = SomePydanticModel(
+            browser_state.value.a_pydantic_object = SomePydanticModel(
                 a=random.randint(0, 499),
-                b="changed-user",
+                b="changed-browser",
                 c=[i for i in range(random.randint(0, 5))],
             )
-            user_state.value.an_object.do_task()
-            ic(user_state)
-            return user_state.value.__dict__, {
-                f"global: {global_state.value.an_object.task_output}": 1.0,
-                f"user: {user_state.value.an_object.task_output if user_state.value else 'uninitialised'}": 1.0,
+            browser_state.value.an_object.do_task()
+            return browser_state.value.__dict__, {
+                f"global: {self.global_state.an_object.task_output}": 1.0,
+                f"session: {session_state.value.an_object.task_output}": 1.0,
+                f"browser: {browser_state.value.an_object.task_output if browser_state.value else 'uninitialised'}": 1.0,
             }
 
         @btn_refresh_states.click(
-            outputs=[json_global_state, json_user_state, label_task_output],
+            outputs=[
+                json_global_state,
+                json_session_state,
+                json_browser_state,
+                label_task_output,
+            ],
             api_name="refresh_states",
         )
         def refresh_states():
-            ic(global_state.value.__dict__)
+            ic(session_state.value.__dict__)
             return (
-                global_state.value.__dict__,
-                (user_state.value.__dict__ if user_state.value else None),
+                self.global_state.__dict__,
+                session_state.value.__dict__,
+                (browser_state.value.__dict__ if browser_state.value else None),
                 {
-                    f"global: {global_state.value.an_object.task_output}": 1.0,
-                    f"user: {user_state.value.an_object.task_output if user_state.value else 'uninitialised'}": 1.0,
+                    f"global: {self.global_state.an_object.task_output}": 1.0,
+                    f"session: {session_state.value.an_object.task_output}": 1.0,
+                    f"browser: {browser_state.value.an_object.task_output if browser_state.value else 'uninitialised'}": 1.0,
                 },
             )
 
@@ -257,23 +335,26 @@ class GradioApp:
                 """
             )
             with gr.Tab(label="State management"):
-                gr.Markdown(
-                    """
-                    This component demonstrates the management of global state (using `gr.State`) and user state (using `gr.BrowserState`).
+                with gr.Accordion(label="Explanation", open=True):
+                    gr.Markdown(
+                        """
+                        This component demonstrates the management of global state (using `gr.State`) and user state (using `gr.BrowserState`).
 
-                    ## Expected behaviour
+                        ## Expected behaviour
 
-                    The global state is shared across all web sessions. Modifications to the global state are reflected in all sessions. On the other hand,
-                    the user state is specific to the user's browser session. The user state is not shared across different browser sessions.
+                        - **Global state**: The global state is shared across all web sessions. Modifications to the global state are reflected in all sessions.
+                        - **Session state**: The session state is specific to the user's browser session. The session state is not shared across different browser sessions and lost when the browser window is closed or the page is refreshed.
+                        - **Browser state**: The browser state is stored in the browser's local storage. It is not shared across different browsers but shared across multiple windows of the same browser. The browser state persists even when the browser window is closed or the page is refreshed.
 
-                    ## Instructions
-                    1. Open this page in two different browsers, not just browser tabs.
-                    2. Change the global state in one browser (by clicking the 'Change global state' button) and see the changes reflected in the other browser (by clicking the 'Refresh states' button).
-                    3. Change the user state in one browser (by clicking the 'Change user state' button) and see that the changes are **not** reflected in the other browser (by clicking the 'Refresh states' button).
+                        ## Try it out
+                        1. Open this page in two different browsers, not just browser tabs.
+                        2. Change the global state in one browser (by clicking the 'Change global state' button) and see the changes reflected in the other browser (by clicking the 'Refresh states' button).
+                        3. Change the session state in one browser (by clicking the 'Change session state' button) and see that the changes are **not** reflected in the other browser (by clicking the 'Refresh states' button).
+                        4. Change the browser state in one browser (by clicking the 'Change browser state' button) and see that the changes are **not** reflected in the other browser (by clicking the 'Refresh states' button). Close one browser and re-open it, click the 'Refresh states' button to see that the browser state has been persisted.
 
-                    Notice that the 'Task output' is the result of a task performed by an object, which is maintained as a reference in the global and user states. Thus, the task output is shared across all sessions even whether it is triggered by a user state change or a global state change.
-                    """
-                )
+                        Notice that the 'Task output' is the result of a task performed by an object, which is maintained as a reference in the global and session and browser states. Thus, the task output is shared across all sessions even whether it is triggered by a global state change or a session state change or a browser state change.
+                        """
+                    )
                 self.component_state_management()
 
             with gr.Tab(label="Text transformations"):
