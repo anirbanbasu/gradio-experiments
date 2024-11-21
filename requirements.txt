@@ -4,3 +4,6 @@ asyncer
 
 # Debugging
 icecream
+
+# System
+python-dotenv
