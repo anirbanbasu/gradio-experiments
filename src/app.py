@@ -77,7 +77,7 @@ class GradioApp:
                 inputs=[input_text],
                 outputs=[output_text],
                 trigger_mode="always_last",
-                api_name="text_to_titlecase",
+                api_name="text_transform_to_uppercase",
             )
             def text_to_uppercase(text: str) -> str:
                 return text.upper()
@@ -111,8 +111,10 @@ class GradioApp:
                     label="Browser state",
                     max_height=300,
                 )
-            label_task_output = gr.Label(
+            json_task_output = gr.JSON(
+                value=None,
                 label="Task output",
+                max_height=200,
             )
             with gr.Row(equal_height=True):
                 btn_change_global_state = gr.Button(
@@ -134,8 +136,8 @@ class GradioApp:
 
         @btn_change_global_state.click(
             inputs=[browser_state],
-            outputs=[json_global_state, label_task_output],
-            api_name="change_global_state",
+            outputs=[json_global_state, json_task_output],
+            api_name="state_management_change_global_state",
         )
         def change_global_state(browser_state_value: str):
             self.global_state.make_random_changes("global")
@@ -145,16 +147,20 @@ class GradioApp:
             return (
                 self.global_state.__dict__,
                 {
-                    f"global: {self.global_state.an_object.task_output}": 1.0,
-                    f"session: {session_state.value.an_object.task_output}": 1.0,
-                    f"browser: {browser_state_obj.an_object.task_output if browser_state_value else GradioApp.BROWSER_STATE_UNINITIALISED_MSG}": 1.0,
+                    "global": self.global_state.an_object.task_output,
+                    "session": session_state.value.an_object.task_output,
+                    "browser": (
+                        browser_state_obj.an_object.task_output
+                        if browser_state_value
+                        else GradioApp.BROWSER_STATE_UNINITIALISED_MSG
+                    ),
                 },
             )
 
         @btn_change_session_state.click(
             inputs=[session_state],
             outputs=[session_state],
-            api_name="change_session_state",
+            api_name="state_management_change_session_state",
         )
         def change_session_state(session_state_value: StateData):
             session_state_value.make_random_changes("session")
@@ -162,7 +168,7 @@ class GradioApp:
 
         @session_state.change(
             inputs=[session_state, browser_state],
-            outputs=[json_session_state, label_task_output],
+            outputs=[json_session_state, json_task_output],
             api_name=False,
         )
         def session_state_change_event(
@@ -174,16 +180,20 @@ class GradioApp:
             return (
                 session_state_value.__dict__,
                 {
-                    f"global: {self.global_state.an_object.task_output}": 1.0,
-                    f"session: {session_state_value.an_object.task_output}": 1.0,
-                    f"browser: {browser_state_obj.an_object.task_output if browser_state_value else GradioApp.BROWSER_STATE_UNINITIALISED_MSG}": 1.0,
+                    "global": self.global_state.an_object.task_output,
+                    "session": session_state_value.an_object.task_output,
+                    "browser": (
+                        browser_state_obj.an_object.task_output
+                        if browser_state_value
+                        else GradioApp.BROWSER_STATE_UNINITIALISED_MSG
+                    ),
                 },
             )
 
         @btn_change_browser_state.click(
             inputs=[browser_state],
-            outputs=[browser_state, json_browser_state, label_task_output],
-            api_name="change_browser_state",
+            outputs=[browser_state, json_browser_state, json_task_output],
+            api_name="state_management_change_browser_state",
         )
         def change_browser_state(browser_state_value: str):
             browser_state_obj = StateData(an_object=self.global_state.an_object)
@@ -194,9 +204,13 @@ class GradioApp:
                 gr.update(value=browser_state_obj),
                 browser_state_obj.__dict__,
                 {
-                    f"global: {self.global_state.an_object.task_output}": 1.0,
-                    f"session: {session_state.value.an_object.task_output}": 1.0,
-                    f"browser: {browser_state_obj.an_object.task_output if browser_state_value else GradioApp.BROWSER_STATE_UNINITIALISED_MSG}": 1.0,
+                    "global": self.global_state.an_object.task_output,
+                    "session": session_state.value.an_object.task_output,
+                    "browser": (
+                        browser_state_obj.an_object.task_output
+                        if browser_state_value
+                        else GradioApp.BROWSER_STATE_UNINITIALISED_MSG
+                    ),
                 },
             )
 
@@ -206,9 +220,9 @@ class GradioApp:
                 json_global_state,
                 json_session_state,
                 json_browser_state,
-                label_task_output,
+                json_task_output,
             ],
-            api_name="refresh_states",
+            api_name="state_management_refresh",
         )
         def refresh_states(session_state_value: StateData, browser_state_value: str):
             browser_state_obj = StateData(an_object=self.global_state.an_object)
@@ -219,9 +233,13 @@ class GradioApp:
                 session_state_value.__dict__,
                 (browser_state_obj.__dict__ if browser_state_value else None),
                 {
-                    f"global: {self.global_state.an_object.task_output}": 1.0,
-                    f"session: {session_state_value.an_object.task_output}": 1.0,
-                    f"browser: {browser_state_obj.an_object.task_output if browser_state_value else GradioApp.BROWSER_STATE_UNINITIALISED_MSG}": 1.0,
+                    "global": self.global_state.an_object.task_output,
+                    "session": session_state_value.an_object.task_output,
+                    "browser": (
+                        browser_state_obj.an_object.task_output
+                        if browser_state_value
+                        else GradioApp.BROWSER_STATE_UNINITIALISED_MSG
+                    ),
                 },
             )
 
@@ -233,6 +251,11 @@ class GradioApp:
             fill_height=True,
             fill_width=True,
             analytics_enabled=False,
+            theme=gr.themes.Ocean(
+                radius_size="md",
+                font=gr.themes.GoogleFont("Lato", weights=(100, 300)),
+                font_mono=gr.themes.GoogleFont("IBM Plex Mono", weights=(100, 300)),
+            ),
         ) as ui:
             gr.Markdown(
                 f"""
@@ -242,7 +265,7 @@ class GradioApp:
 
                  - Gradio version: _{gr.get_package_version()}_
                  - Python version: _{sys.version}_
-                 - Platform: _{platform.version()}_
+                 - Platform: _{platform.uname()._asdict()}_
                  - GitHub repository: _[gradio-experiments](https://github.com/anirbanbasu/gradio-experiments)_
                 """
             )

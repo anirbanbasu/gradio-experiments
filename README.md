@@ -39,5 +39,5 @@ The following features have been or are being implemented.
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| State management | Demonstration of global, session and browser (local) states. | In progress, potential bugs |
+| State management | Demonstration of global, session and browser (local) states. | Done |
 | Text transformation | Just a placeholder. | Done |

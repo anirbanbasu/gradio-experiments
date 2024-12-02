@@ -35,7 +35,7 @@ class SomeTask:
     """An example class that performs a task."""
 
     def __init__(self):
-        self.task_output = "task-not-executed"
+        self.task_output = "task-not-executed-in-this-session"
 
     def do_task(self):
         self.task_output = f"task-done at {datetime.datetime.now()}"
