@@ -251,11 +251,12 @@ class GradioApp:
             fill_height=True,
             fill_width=True,
             analytics_enabled=False,
-            theme=gr.themes.Ocean(
-                radius_size="md",
-                font=gr.themes.GoogleFont("Lato", weights=(100, 300)),
-                font_mono=gr.themes.GoogleFont("IBM Plex Mono", weights=(100, 300)),
-            ),
+            # Google fonts do not seem to work with Hugging Face Spaces.
+            # theme=gr.themes.Ocean(
+            #     radius_size="md",
+            #     font=gr.themes.GoogleFont("Lato", weights=(100, 300)),
+            #     font_mono=gr.themes.GoogleFont("IBM Plex Mono", weights=(100, 300)),
+            # ),
         ) as ui:
             gr.Markdown(
                 f"""
