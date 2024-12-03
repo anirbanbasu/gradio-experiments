@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import subprocess
 import sys
 import platform
 import gradio as gr
@@ -302,6 +303,10 @@ class GradioApp:
 if __name__ == "__main__":
     app = GradioApp()
     ic(load_dotenv())
+    print(subprocess.check_output(["gradio", "environment"]).decode())
     app.construct_ui().queue().launch(
-        server_name="0.0.0.0", share=False, ssr_mode=False
+        debug=True,
+        server_name="0.0.0.0",
+        share=False,
+        # ssr_mode=False
     )
