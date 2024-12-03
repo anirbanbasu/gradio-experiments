@@ -302,4 +302,6 @@ class GradioApp:
 if __name__ == "__main__":
     app = GradioApp()
     ic(load_dotenv())
-    app.construct_ui().queue().launch(server_name="0.0.0.0", share=False)
+    app.construct_ui().queue().launch(
+        server_name="0.0.0.0", share=False, ssr_mode=False
+    )
