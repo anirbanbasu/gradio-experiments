@@ -86,6 +86,21 @@ class GradioApp:
 
     def component_state_management(self) -> gr.Group:
         """This is a component to demonstrate state management."""
+
+        def state_task_dictionary(
+            session_state_value: StateData,
+            browser_state_value: StateData,
+        ) -> dict:
+            return {
+                "global": self.global_state.an_object.task_output,
+                "session": session_state_value.an_object.task_output,
+                "browser": (
+                    browser_state_value.an_object.task_output
+                    if browser_state_value
+                    else GradioApp.BROWSER_STATE_UNINITIALISED_MSG
+                ),
+            }
+
         with gr.Group() as component:
             session_state = gr.State(
                 StateData(an_object=self.global_state.an_object),
@@ -135,26 +150,23 @@ class GradioApp:
                 )
 
         @btn_change_global_state.click(
-            inputs=[browser_state],
+            inputs=[session_state, browser_state],
             outputs=[json_global_state, json_task_output],
             api_name="state_management_change_global_state",
         )
-        def change_global_state(browser_state_value: str):
+        def change_global_state(
+            session_state_value: StateData, browser_state_value: str
+        ):
             self.global_state.make_random_changes("global")
             browser_state_obj = StateData(an_object=self.global_state.an_object)
             if browser_state_value is not None:
                 browser_state_obj.reset_from_json_str(browser_state_value)
             return (
                 self.global_state.__dict__,
-                {
-                    "global": self.global_state.an_object.task_output,
-                    "session": session_state.value.an_object.task_output,
-                    "browser": (
-                        browser_state_obj.an_object.task_output
-                        if browser_state_value
-                        else GradioApp.BROWSER_STATE_UNINITIALISED_MSG
-                    ),
-                },
+                state_task_dictionary(
+                    session_state_value,
+                    browser_state_obj if browser_state_value else None,
+                ),
             )
 
         @btn_change_session_state.click(
@@ -179,23 +191,20 @@ class GradioApp:
                 browser_state_obj.reset_from_json_str(browser_state_value)
             return (
                 session_state_value.__dict__,
-                {
-                    "global": self.global_state.an_object.task_output,
-                    "session": session_state_value.an_object.task_output,
-                    "browser": (
-                        browser_state_obj.an_object.task_output
-                        if browser_state_value
-                        else GradioApp.BROWSER_STATE_UNINITIALISED_MSG
-                    ),
-                },
+                state_task_dictionary(
+                    session_state_value,
+                    browser_state_obj if browser_state_value else None,
+                ),
             )
 
         @btn_change_browser_state.click(
-            inputs=[browser_state],
+            inputs=[session_state, browser_state],
             outputs=[browser_state, json_browser_state, json_task_output],
             api_name="state_management_change_browser_state",
         )
-        def change_browser_state(browser_state_value: str):
+        def change_browser_state(
+            session_state_value: StateData, browser_state_value: str
+        ):
             browser_state_obj = StateData(an_object=self.global_state.an_object)
             if browser_state_value is not None:
                 browser_state_obj.reset_from_json_str(browser_state_value)
@@ -203,15 +212,10 @@ class GradioApp:
             return (
                 gr.update(value=browser_state_obj),
                 browser_state_obj.__dict__,
-                {
-                    "global": self.global_state.an_object.task_output,
-                    "session": session_state.value.an_object.task_output,
-                    "browser": (
-                        browser_state_obj.an_object.task_output
-                        if browser_state_value
-                        else GradioApp.BROWSER_STATE_UNINITIALISED_MSG
-                    ),
-                },
+                state_task_dictionary(
+                    session_state_value,
+                    browser_state_obj,
+                ),
             )
 
         @btn_refresh_states.click(
@@ -232,15 +236,10 @@ class GradioApp:
                 self.global_state.__dict__,
                 session_state_value.__dict__,
                 (browser_state_obj.__dict__ if browser_state_value else None),
-                {
-                    "global": self.global_state.an_object.task_output,
-                    "session": session_state_value.an_object.task_output,
-                    "browser": (
-                        browser_state_obj.an_object.task_output
-                        if browser_state_value
-                        else GradioApp.BROWSER_STATE_UNINITIALISED_MSG
-                    ),
-                },
+                state_task_dictionary(
+                    session_state_value,
+                    browser_state_obj if browser_state_value else None,
+                ),
             )
 
         return component
