@@ -2,6 +2,10 @@
 gradio
 asyncer
 
+# Data and datasets
+polars
+kagglehub
+
 # Debugging
 icecream
 

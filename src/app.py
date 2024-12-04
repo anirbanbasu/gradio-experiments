@@ -24,6 +24,8 @@ from dotenv import load_dotenv
 from data import StateData
 from utils import EnvironmentVariables, parse_env
 
+import polars as pl
+
 try:
     from icecream import ic
 except ImportError:  # Graceful fallback if IceCream isn't installed.
@@ -245,6 +247,85 @@ class GradioApp:
 
         return component
 
+    def component_datasets(self) -> gr.Group:
+        """This is a component to experiment with datasets."""
+        with gr.Group() as component:
+            session_pl_dataframe = gr.State(None)
+            session_pl_dataframe_display = gr.State(None)
+            file_dataset = gr.File(
+                label="Dataset file",
+                visible=True,
+                interactive=True,
+                file_count="single",
+                file_types=[".csv"],
+            )
+            dataframe_data_preview = gr.Dataframe(
+                value=None,
+                type="polars",
+                label="Dataframe preview",
+                max_height=300,
+                interactive=True,
+                visible=False,
+            )
+
+        @file_dataset.upload(
+            inputs=[file_dataset],
+            outputs=[session_pl_dataframe],
+            api_name="dataset_upload",
+        )
+        def upload_dataset_file(file):
+            if file is None:
+                return None
+            result = pl.read_csv(file.name)
+            gr.Info(
+                message=f"Loaded data frame: {result.shape[0]} rows and {result.shape[1]} columns.",
+                duration=5,
+            )
+            return result
+
+        @file_dataset.clear(
+            outputs=[session_pl_dataframe],
+            api_name="dataset_clear",
+        )
+        def clear_dataset_file():
+            return None
+
+        @session_pl_dataframe.change(
+            inputs=[session_pl_dataframe],
+            outputs=[session_pl_dataframe_display],
+            api_name=False,
+        )
+        def session_pl_dataframe_changed(data: pl.DataFrame):
+            return data
+
+        @session_pl_dataframe_display.change(
+            inputs=[session_pl_dataframe_display],
+            outputs=[dataframe_data_preview],
+            api_name=False,
+        )
+        def session_pl_dataframe_display_changed(data: pl.DataFrame):
+            if data is None or data.shape[0] == 0:
+                return gr.update(value=None, visible=False)
+
+            # Convert the data types to Gradio data frame types
+            col_types = [str(t) for t in data.dtypes]
+            for i, col_type in enumerate(col_types):
+                col_type_lower = col_type.lower()
+                if col_type_lower.startswith("string"):
+                    col_types[i] = "markdown"
+                elif col_type_lower.startswith("int") or col_type_lower.startswith(
+                    "float"
+                ):
+                    col_types[i] = "number"
+                elif col_type_lower.startswith("bool"):
+                    col_types[i] = "bool"
+                elif col_type_lower.startswith("date"):
+                    col_types[i] = "date"
+
+            return gr.update(value=data, datatype=col_types, visible=True)
+
+        return component
+
     def construct_ui(self) -> gr.Blocks:
         with gr.Blocks(
             title=self.app_name,
@@ -294,6 +375,15 @@ class GradioApp:
                     )
                 self.component_state_management()
 
+            with gr.Tab(label="Dataset"):
+                with gr.Accordion(label="Explanation", open=True):
+                    gr.Markdown(
+                        """
+                        This component experiments with datasets. _More explanation will be added._
+                        """
+                    )
+                self.component_datasets()
+
             with gr.Tab(label="Text transformations"):
                 self.component_text_transformation()
 
@@ -301,6 +391,10 @@ class GradioApp:
 
 
 if __name__ == "__main__":
+    # path = kagglehub.dataset_download(
+    #     "tarktunataalt/2023-global-country-development-and-prosperity-index"
+    # )
+    # ic(path)
     app = GradioApp()
     ic(load_dotenv())
     print(subprocess.check_output(["gradio", "environment"]).decode())

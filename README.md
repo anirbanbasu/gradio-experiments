@@ -39,5 +39,6 @@ The following features have been or are being implemented.
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| State management | Demonstration of global, session and browser (local) states. | Done |
-| Text transformation | Just a placeholder. | Done |
+| State management | Demonstration of global, session and browser (local) states. | Completed |
+| Datasets | Experimentation with datasets and data frames. | Preliminary stage |
+| Text transformation | Just a placeholder. | Completed |
