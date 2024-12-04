@@ -21,6 +21,15 @@ from typing import Any
 class Constants:
     SPACE_STRING = " "
     TRUE_VALUES_LIST = ["true", "yes", "t", "y", "on"]
+    FILE_EXTENSION_CSV = ".csv"
+    FILE_EXTENSION_JSON = ".json"
+    FILE_EXTENSION_PARQUET = ".parquet"
+    ALLOWED_DATASET_FILE_EXTENSIONS = [
+        FILE_EXTENSION_CSV,
+        FILE_EXTENSION_JSON,
+        FILE_EXTENSION_PARQUET,
+    ]
+    EMPTY_LIST = []
 
 
 class EnvironmentVariables:

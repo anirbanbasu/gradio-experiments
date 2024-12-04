@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import os
 import subprocess
 import sys
 import platform
@@ -22,7 +23,7 @@ import gradio as gr
 
 from dotenv import load_dotenv
 from data import StateData
-from utils import EnvironmentVariables, parse_env
+from utils import Constants, EnvironmentVariables, parse_env
 
 import polars as pl
 
@@ -257,15 +258,19 @@ class GradioApp:
                 visible=True,
                 interactive=True,
                 file_count="single",
-                file_types=[".csv"],
+                file_types=Constants.ALLOWED_DATASET_FILE_EXTENSIONS,
             )
             dataframe_data_preview = gr.Dataframe(
                 value=None,
                 type="polars",
                 label="Dataframe preview",
                 max_height=300,
-                interactive=True,
+                interactive=False,
                 visible=False,
+            )
+
+            json_selected_row = gr.JSON(
+                label="Last selected row", value=None, max_height=300, visible=False
             )
 
         @file_dataset.upload(
@@ -276,7 +281,19 @@ class GradioApp:
         def upload_dataset_file(file):
             if file is None:
                 return None
-            result = pl.read_csv(file.name)
+            _, extension = os.path.splitext(file.name)
+            if extension.lower() == Constants.FILE_EXTENSION_CSV:
+                result = pl.read_csv(
+                    source=file.name, ignore_errors=True, infer_schema_length=10000
+                )
+            elif extension.lower() == Constants.FILE_EXTENSION_JSON:
+                result = pl.read_json(source=file.name, infer_schema_length=10000)
+            elif extension.lower() == Constants.FILE_EXTENSION_PARQUET:
+                result = pl.read_parquet(source=file.name)
+            else:
+                raise gr.Error(
+                    f"Unsupported dataset file extension: '{extension}'. Supported extensions: {Constants.ALLOWED_DATASET_FILE_EXTENSIONS}."
+                )
             gr.Info(
                 message=f"Loaded data frame: {result.shape[0]} rows and {result.shape[1]} columns.",
                 duration=5,
@@ -300,29 +317,47 @@ class GradioApp:
 
         @session_pl_dataframe_display.change(
             inputs=[session_pl_dataframe_display],
-            outputs=[dataframe_data_preview],
+            outputs=[dataframe_data_preview, json_selected_row],
             api_name=False,
         )
         def session_pl_dataframe_display_changed(data: pl.DataFrame):
             if data is None or data.shape[0] == 0:
+                return (
+                    gr.update(value=None, visible=False),
+                    gr.update(value=None, visible=False),
+                )
+
+            return (
+                gr.update(
+                    label=f"Rows {data.shape[0]}, columns {data.shape[1]}.",
+                    value=data,
+                    visible=True,
+                ),
+                gr.update(value=None, visible=False),
+            )
+
+        @dataframe_data_preview.select(
+            inputs=[dataframe_data_preview],
+            outputs=[json_selected_row],
+            api_name=False,
+        )
+        def dataframe_data_preview_selected(
+            selected_index: gr.SelectData, data: pl.DataFrame
+        ):
+            if selected_index is None or not selected_index.selected:
                 return gr.update(value=None, visible=False)
-
-            # Convert the data types to Gradio data frame types
-            col_types = [str(t) for t in data.dtypes]
-            for i, col_type in enumerate(col_types):
-                col_type_lower = col_type.lower()
-                if col_type_lower.startswith("string"):
-                    col_types[i] = "markdown"
-                elif col_type_lower.startswith("int") or col_type_lower.startswith(
-                    "float"
-                ):
-                    col_types[i] = "number"
-                elif col_type_lower.startswith("bool"):
-                    col_types[i] = "bool"
-                elif col_type_lower.startswith("date"):
-                    col_types[i] = "date"
-
-            return gr.update(value=data, datatype=col_types, visible=True)
+            try:
+                # FIXME: This selection can throw the following error in some cases.
+                # polars.exceptions.ComputeError: could not append value: "" of type: str to the builder; make sure that all rows have the same schema or consider increasing `infer_schema_length`
+                # it might also be that a value overflows the data-type's capacity
+                return gr.update(
+                    value=data.row(index=selected_index.index[0], named=True),
+                    visible=True,
+                )
+            except Exception as e:
+                raise gr.Error(
+                    message=f"{e}",
+                )
 
         return component
 
@@ -391,12 +426,8 @@ class GradioApp:
 
 
 if __name__ == "__main__":
-    # path = kagglehub.dataset_download(
-    #     "tarktunataalt/2023-global-country-development-and-prosperity-index"
-    # )
-    # ic(path)
-    app = GradioApp()
     ic(load_dotenv())
+    app = GradioApp()
     print(subprocess.check_output(["gradio", "environment"]).decode())
     app.construct_ui().queue().launch(
         debug=True, server_name="0.0.0.0", share=False, ssr_mode=False
