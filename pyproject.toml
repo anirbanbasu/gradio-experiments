@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "gradio-experiments-utils"
+version = "0.1.0"
+description = "An almost unnecessary utilities package for gradio-experiments."
+authors = ["Anirban Basu <anirbanbasu@users.noreply.github.com>"]
+license = "GPL-3.0-only"
+readme = "README.md"
+repository = "https://github.com/anirbanbasu/gradio-experiments"
+keywords = ["gradio", "gradio-experiments", "utilities", "ui", "web"]
+packages = [
+    { include = "src" }
+]
+exclude = [ "src/app.py", "src/data.py", "src/utils.py" ]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+python-dotenv = "^1.0.1"
+icecream = "^2.1.3"
+pydantic = "^2.9.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -35,9 +35,11 @@ class SomeTask:
     """An example class that performs a task."""
 
     def __init__(self):
+        """Create a new instance of the SomeTask class without performing the task."""
         self.task_output = "task-not-executed-in-this-session"
 
     def do_task(self):
+        """Perform the task."""
         self.task_output = f"task-done at {datetime.datetime.now()}"
 
 
@@ -65,12 +67,22 @@ class StateData:
             self.a_dict: Dict[str, SomePydanticModel] = {}
 
     def __hash__(self) -> int:
-        """A hash function to ensure that changes to the object data result in different hash values."""
+        """
+        A hash function to ensure that changes to the object data result in different hash values.
+
+        Returns:
+            int: The hash value of the object.
+        """
         # This is absolutely necessary for gr.State to work, see: https://www.gradio.app/guides/state-in-blocks
         return hash(str(self))
 
     def __str__(self):
-        """Nicely formatted JSON string of the dictionary representation of this class."""
+        """
+        Nicely formatted JSON string of the dictionary representation of this class.
+
+        Returns:
+            str: A JSON string representation of the object.
+        """
         # This is necessary to make an object of the class JSON serializable for gr.BrowserState, see: https://www.gradio.app/guides/state-in-blocks
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=4)
 
@@ -143,6 +155,9 @@ class StateData:
     def to_dict(self):
         """
         Converts the object into a dictionary representation.
+
+        Returns:
+            dict: A dictionary representation of the object.
         """
         return {
             "a_pydantic_object": (
@@ -162,6 +177,12 @@ class StateData:
     def __deepcopy__(self, memo):
         """
         A deep copy implementation for the class.
+
+        Args:
+            memo: A dictionary to keep track of the objects that have already been copied.
+
+        Returns:
+            StateData: A deep copy of the object.
         """
         cls = self.__class__
         newone = cls.__new__(cls)

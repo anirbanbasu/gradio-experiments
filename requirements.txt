@@ -5,9 +5,12 @@ asyncer
 # Data and datasets
 polars
 kagglehub
+pyarrow
 
+# Stuff that can be installed using the local gradio-experiments-utils package, which will not be made available on PyPI
+.
 # Debugging
-icecream
+# icecream
 
 # System
-python-dotenv
+# python-dotenv

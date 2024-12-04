@@ -22,8 +22,9 @@ import platform
 import gradio as gr
 
 from dotenv import load_dotenv
-from data import StateData
-from utils import Constants, EnvironmentVariables, parse_env
+from utils import AppConstants, EnvironmentVariables
+from gradio_experiments_utils.utils import parse_env
+from gradio_experiments_utils.data import StateData
 
 import polars as pl
 
@@ -258,7 +259,7 @@ class GradioApp:
                 visible=True,
                 interactive=True,
                 file_count="single",
-                file_types=Constants.ALLOWED_DATASET_FILE_EXTENSIONS,
+                file_types=AppConstants.ALLOWED_DATASET_FILE_EXTENSIONS,
             )
             dataframe_data_preview = gr.Dataframe(
                 value=None,
@@ -282,17 +283,20 @@ class GradioApp:
             if file is None:
                 return None
             _, extension = os.path.splitext(file.name)
-            if extension.lower() == Constants.FILE_EXTENSION_CSV:
+            if extension.lower() == AppConstants.FILE_EXTENSION_CSV:
                 result = pl.read_csv(
-                    source=file.name, ignore_errors=True, infer_schema_length=10000
+                    source=file.name,
+                    ignore_errors=True,
+                    use_pyarrow=True,
+                    batch_size=16384,
                 )
-            elif extension.lower() == Constants.FILE_EXTENSION_JSON:
-                result = pl.read_json(source=file.name, infer_schema_length=10000)
-            elif extension.lower() == Constants.FILE_EXTENSION_PARQUET:
+            elif extension.lower() == AppConstants.FILE_EXTENSION_JSON:
+                result = pl.read_json(source=file.name)
+            elif extension.lower() == AppConstants.FILE_EXTENSION_PARQUET:
                 result = pl.read_parquet(source=file.name)
             else:
                 raise gr.Error(
-                    f"Unsupported dataset file extension: '{extension}'. Supported extensions: {Constants.ALLOWED_DATASET_FILE_EXTENSIONS}."
+                    f"Unsupported dataset file extension: '{extension}'. Supported extensions: {AppConstants.ALLOWED_DATASET_FILE_EXTENSIONS}."
                 )
             gr.Info(
                 message=f"Loaded data frame: {result.shape[0]} rows and {result.shape[1]} columns.",
@@ -342,22 +346,17 @@ class GradioApp:
             api_name=False,
         )
         def dataframe_data_preview_selected(
-            selected_index: gr.SelectData, data: pl.DataFrame
+            data: pl.DataFrame, selected_event: gr.SelectData
         ):
-            if selected_index is None or not selected_index.selected:
+            if selected_event is None or not selected_event.selected:
                 return gr.update(value=None, visible=False)
-            try:
-                # FIXME: This selection can throw the following error in some cases.
-                # polars.exceptions.ComputeError: could not append value: "" of type: str to the builder; make sure that all rows have the same schema or consider increasing `infer_schema_length`
-                # it might also be that a value overflows the data-type's capacity
-                return gr.update(
-                    value=data.row(index=selected_index.index[0], named=True),
-                    visible=True,
-                )
-            except Exception as e:
-                raise gr.Error(
-                    message=f"{e}",
-                )
+            # FIXME: This selection will throw an error such as the following error if null values exist.
+            # polars.exceptions.ComputeError: could not append value: "" of type: str to the builder; make sure that all rows have the same schema or consider increasing `infer_schema_length`
+            # it might also be that a value overflows the data-type's capacity
+            return gr.update(
+                value=data.row(index=selected_event.index[0], named=True),
+                visible=True,
+            )
 
         return component
 
