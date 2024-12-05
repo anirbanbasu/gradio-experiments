@@ -25,7 +25,7 @@ import gradio as gr
 try:
     from dotenv import load_dotenv
 except ImportError:
-    os.system("pip install ./gradio_experiments_utils-0.1.0-py3-none-any.whl")
+    os.system("pip install -e .")
     from dotenv import load_dotenv
 
 from utils import AppConstants, EnvironmentVariables
