@@ -8,8 +8,10 @@ kagglehub
 pyarrow
 
 # Stuff that can be installed using the local gradio-experiments-utils package, which will not be made available on PyPI
-wheel
-gradio_experiments_utils-0.1.0-py3-none-any.whl
+# wheel
+# gradio_experiments_utils-0.1.0-py3-none-any.whl
+# However, deployment on Hugging Face Spaces will fail because of containerisation. Use the following method instead:
+# https://discuss.huggingface.co/t/custom-python-packages-at-spaces/17250/6
 # Debugging
 # icecream
 

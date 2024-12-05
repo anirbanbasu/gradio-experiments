@@ -21,7 +21,13 @@ import sys
 import platform
 import gradio as gr
 
-from dotenv import load_dotenv
+# See why we are doing this with the local package: https://discuss.huggingface.co/t/custom-python-packages-at-spaces/17250/6
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    os.system("pip install ./gradio_experiments_utils-0.1.0-py3-none-any.whl")
+    from dotenv import load_dotenv
+
 from utils import AppConstants, EnvironmentVariables
 from gradio_experiments_utils.utils import parse_env
 from gradio_experiments_utils.data import StateData
