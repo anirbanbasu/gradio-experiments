@@ -434,6 +434,4 @@ if __name__ == "__main__":
     ic(load_dotenv())
     app = GradioApp()
     print(subprocess.check_output(["gradio", "environment"]).decode())
-    app.construct_ui().queue().launch(
-        debug=True, server_name="0.0.0.0", share=False, ssr_mode=False
-    )
+    app.construct_ui().queue().launch(server_name="0.0.0.0", share=False)
