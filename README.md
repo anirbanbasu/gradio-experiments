@@ -41,4 +41,5 @@ The following features have been or are being implemented.
 |---------|-------------|--------|
 | State management | Demonstration of global, session and browser (local) states. | Completed |
 | Datasets | Experimentation with datasets and data frames. | Preliminary stage |
+| Pydantic enitity profile | Experimentation with Pydantic based entity profiles. | Partially implemented |
 | Text transformation | Just a placeholder. | Completed |

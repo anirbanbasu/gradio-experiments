@@ -3,8 +3,13 @@ import datetime
 import json
 import random
 from typing import Dict, List, Optional
+from uuid import uuid4
 
 from pydantic import BaseModel, Field
+
+from gradio_experiments_utils.utils import Constants
+
+import randomname as rn
 
 
 class SomePydanticModel(BaseModel):
@@ -176,3 +181,73 @@ class StateData:
         # Notice that newone.an_object is not created again and is shared between the original and the new object.
         newone.an_object = self.an_object
         return newone
+
+
+class ProfileName(BaseModel):
+    """A Pydantic model to hold the name of a entity profile."""
+
+    namespace: str = Field(
+        title="Base namespace",
+        description="The namespace of the entity, e.g., family name of a person in some cultures.",
+    )
+    other_names: List[str] = Field(
+        title="Other names",
+        description="The other names of the entity.",
+    )
+
+
+class ProfileImage(BaseModel):
+    """A Pydantic model to hold the photo of a entity profile."""
+
+    data: str = Field(
+        title="Image data",
+        description="The base64 encoded data of the image or the URL of the image.",
+    )
+    caption: Optional[str] = Field(
+        default=Constants.EMPTY_STRING,
+        title="Caption",
+        description="The caption of the image.",
+    )
+    credits: Optional[str] = Field(
+        default=Constants.EMPTY_STRING,
+        title="Credits",
+        description="The credits for the image.",
+    )
+
+
+class EntityProfile(BaseModel):
+    """A Pydantic model to hold entity profile data."""
+
+    entity_id: Optional[str] = Field(
+        title="Entity ID",
+        description="The unique identifier of the entity.",
+        default=uuid4().hex,
+    )
+    name: Optional[ProfileName] = Field(
+        default=None, title="Name", description="The name of the entity."
+    )
+    representative_image: Optional[ProfileImage] = Field(
+        default=None,
+        title="Representative picture",
+        description="The representative picture of the entity.",
+    )
+
+    def __hash__(self):
+        return hash(str(self))
+
+    @staticmethod
+    def create_random_profile():
+        # Get two random names
+        n1_1, n1_2 = rn.get_name(sep=Constants.SPACE_STRING).split(
+            Constants.SPACE_STRING
+        )
+        n2_1, n2_2 = rn.get_name(sep=Constants.SPACE_STRING).split(
+            Constants.SPACE_STRING
+        )
+        retval = EntityProfile(
+            name=ProfileName(
+                namespace=n1_1.title(),
+                other_names=[n1_2.title(), n2_1.title(), n2_2.title()],
+            ),
+        )
+        return retval

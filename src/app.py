@@ -1,7 +1,11 @@
+import base64
+import io
 import os
 import subprocess
 import sys
 import platform
+import PIL
+import PIL.Image
 import gradio as gr
 
 # See why we are doing this with the local package: https://discuss.huggingface.co/t/custom-python-packages-at-spaces/17250/6
@@ -12,8 +16,12 @@ except ImportError:
     from dotenv import load_dotenv
 
 from utils import AppConstants, EnvironmentVariables
-from gradio_experiments_utils.utils import parse_env
-from gradio_experiments_utils.data import StateData
+from gradio_experiments_utils.utils import Constants, parse_env
+from gradio_experiments_utils.data import (
+    ProfileImage,
+    StateData,
+    EntityProfile,
+)
 
 import polars as pl
 
@@ -34,6 +42,7 @@ class GradioApp:
         # This is a safe global variable because it remains the same for all users and is never modified.
         self.app_name = "gradio-experiments"
         self.state_key = f"{self.app_name}-local-state"
+        self.profile_key = f"{self.app_name}-entity-profile"
 
         self.global_state = StateData()
 
@@ -349,6 +358,252 @@ class GradioApp:
 
         return component
 
+    def component_pydantic_profiles(
+        self,
+        profile_object_in_session: gr.State,
+        profile_object_in_browser_storage: gr.BrowserState,
+    ) -> gr.Group:
+        with gr.Group() as component:
+            with gr.Tab(label="View (decorative)") as tab_view_decorative:
+                gr.Markdown(
+                    """
+                        You can view the underlying profile information here as HTML. You can edit the information in the edit tab.
+                        """
+                )
+                with gr.Group():
+                    pass
+            with gr.Tab(label="View (JSON)") as tab_json_view:
+                gr.Markdown(
+                    """
+                        You can view the underlying profile information here as JSON. You can edit the information in the edit tab.
+                        """
+                )
+                with gr.Group():
+                    json_view = gr.JSON()
+
+            with gr.Tab(label="Edit") as tab_edit:
+                gr.Markdown(
+                    """
+                        You can edit the underlying profile information here and view it in the other tabs.
+                        """
+                )
+                with gr.Group():
+                    with gr.Row(equal_height=True):
+                        text_profile_name_namespace = gr.Textbox(
+                            label="Namespace",
+                            info="Enter the namespace of the profile.",
+                            value=(
+                                profile_object_in_session.value.name.namespace
+                                if profile_object_in_session.value
+                                else Constants.EMPTY_STRING
+                            ),
+                        )
+                        text_profile_name_other_names = gr.TextArea(
+                            label="Other names",
+                            info="Enter the other names of the profile, one per line.",
+                            max_lines=10,
+                            interactive=True,
+                        )
+                    with gr.Row(equal_height=True):
+                        image_profile_preview = gr.Image(
+                            label="Preview",
+                            type="pil",
+                            height=256,
+                            width=256,
+                            show_label=False,
+                            show_download_button=False,
+                            show_fullscreen_button=False,
+                            show_share_button=False,
+                            visible=False,
+                        )
+                        file_image_profile = gr.File(
+                            type="binary",
+                            file_types=[
+                                ".png",
+                                ".jpg",
+                                ".jpeg",
+                                ".gif",
+                            ],
+                            label="Profile image (upload to replace existing, if any): minimum 256x256 pixels",
+                        )
+                        with gr.Column():
+                            text_image_caption = gr.Textbox(
+                                label="Image caption",
+                                info="Enter the caption of the image (optional).",
+                                interactive=True,
+                            )
+                            text_image_credits = gr.Textbox(
+                                label="Image credits",
+                                info="Enter the credits for the image (optional).",
+                                interactive=True,
+                            )
+
+            @tab_edit.select(
+                inputs=[
+                    profile_object_in_session,
+                ],
+                outputs=[
+                    text_profile_name_namespace,
+                    text_profile_name_other_names,
+                    file_image_profile,
+                    image_profile_preview,
+                    text_image_caption,
+                    text_image_credits,
+                ],
+                api_name=False,
+            )
+            def tab_edit_selected(profile: EntityProfile) -> EntityProfile:
+                if profile:
+                    image_bytes = (
+                        base64.b64decode(
+                            profile.representative_image.data.encode("ascii")
+                        )
+                        if profile.representative_image
+                        else None
+                    )
+                    return [
+                        profile.name.namespace,
+                        (
+                            gr.update(
+                                value=Constants.CRLF.join(profile.name.other_names),
+                                lines=len(profile.name.other_names),
+                            )
+                            if profile.name.other_names
+                            else Constants.EMPTY_STRING
+                        ),
+                        None,
+                        gr.update(
+                            visible=True if profile.representative_image else False,
+                            value=(
+                                PIL.Image.open(io.BytesIO(image_bytes))
+                                if image_bytes
+                                else None
+                            ),
+                        ),
+                        (
+                            profile.representative_image.caption
+                            if profile.representative_image
+                            else Constants.EMPTY_STRING
+                        ),
+                        (
+                            profile.representative_image.credits
+                            if profile.representative_image
+                            else Constants.EMPTY_STRING
+                        ),
+                    ]
+                else:
+                    return [
+                        Constants.EMPTY_STRING,
+                        Constants.EMPTY_STRING,
+                        None,
+                        gr.update(
+                            visible=False,
+                            value=None,
+                        ),
+                        Constants.EMPTY_STRING,
+                        Constants.EMPTY_STRING,
+                    ]
+
+            @tab_view_decorative.select(
+                inputs=[profile_object_in_session],
+            )
+            def tab_view_decorative_selected(profile: EntityProfile):
+                return None
+
+            @tab_json_view.select(
+                inputs=[profile_object_in_session],
+                outputs=[json_view],
+                api_name=False,
+            )
+            def tab_json_view_selected(profile: EntityProfile) -> EntityProfile:
+                return profile.model_dump() if profile else None
+
+            @text_profile_name_namespace.input(
+                inputs=[text_profile_name_namespace, profile_object_in_session],
+                outputs=[profile_object_in_session],
+                api_name=False,
+            )
+            def text_profile_name_namespace_input(
+                namespace: str, profile_object_in_session_value: EntityProfile
+            ):
+                if profile_object_in_session_value:
+                    profile_object_in_session_value.name.namespace = namespace
+                return profile_object_in_session_value
+
+            @text_profile_name_other_names.input(
+                inputs=[text_profile_name_other_names, profile_object_in_session],
+                outputs=[profile_object_in_session],
+                api_name=False,
+            )
+            def text_profile_name_other_names_input(
+                other_names: str, profile_object_in_session_value: EntityProfile
+            ):
+                if profile_object_in_session_value:
+                    profile_object_in_session_value.name.other_names = (
+                        other_names.split()
+                    )
+                return profile_object_in_session_value
+
+            @file_image_profile.upload(
+                inputs=[file_image_profile, profile_object_in_session],
+                outputs=[profile_object_in_session, image_profile_preview],
+                api_name=False,
+            )
+            def image_profile_uploaded(
+                image_data: bytes, profile_object_in_session_value: EntityProfile
+            ):
+                if profile_object_in_session_value:
+                    profile_object_in_session_value.representative_image = ProfileImage(
+                        data=base64.b64encode(image_data).decode("ascii")
+                    )
+                    return [
+                        profile_object_in_session_value,
+                        gr.update(
+                            visible=True if image_data else False,
+                            value=(
+                                PIL.Image.open(io.BytesIO(image_data))
+                                if image_data
+                                else None
+                            ),
+                        ),
+                    ]
+                else:
+                    return [None, gr.update(visible=False, value=None)]
+
+            @text_image_caption.input(
+                inputs=[text_image_caption, profile_object_in_session],
+                outputs=[profile_object_in_session],
+            )
+            def text_image_caption_input(
+                caption: str, profile_object_in_session_value: EntityProfile
+            ):
+                if profile_object_in_session_value:
+                    if profile_object_in_session_value.representative_image:
+                        profile_object_in_session_value.representative_image.caption = (
+                            caption
+                        )
+                    else:
+                        gr.Warning("Upload an image first to add a caption!")
+                return profile_object_in_session_value
+
+            @text_image_credits.input(
+                inputs=[text_image_credits, profile_object_in_session],
+                outputs=[profile_object_in_session],
+            )
+            def text_image_credits_input(
+                credits: str, profile_object_in_session_value: EntityProfile
+            ):
+                if profile_object_in_session_value:
+                    if profile_object_in_session_value.representative_image:
+                        profile_object_in_session_value.representative_image.credits = (
+                            credits
+                        )
+                    else:
+                        gr.Warning("Upload an image first to add credits!")
+                return profile_object_in_session_value
+
+        return component
+
     def construct_ui(self) -> gr.Blocks:
         with gr.Blocks(
             title=self.app_name,
@@ -407,6 +662,63 @@ class GradioApp:
                     )
                 self.component_datasets()
 
+            with gr.Tab(label="Pydantic entity profiles") as tab_pydantic_profiles:
+                profile_object_in_session = gr.State()
+                profile_object_in_browser_storage = gr.BrowserState(
+                    storage_key=self.profile_key,
+                    secret=parse_env(EnvironmentVariables.LOCAL_STORAGE_ENCRYPTION_KEY),
+                )
+                with gr.Accordion(label="Explanation", open=True):
+                    gr.Markdown(
+                        """
+                        This component experiments with profile information backed by Pydantic models. _More explanation will be added._
+                        """
+                    )
+                self.component_pydantic_profiles(
+                    profile_object_in_session, profile_object_in_browser_storage
+                )
+
+            @tab_pydantic_profiles.select(
+                inputs=[
+                    profile_object_in_session,
+                    profile_object_in_browser_storage,
+                ],
+                outputs=[
+                    profile_object_in_session,
+                    profile_object_in_browser_storage,
+                ],
+                api_name=False,
+            )
+            def tab_pydantic_profiles_selected(
+                profile: EntityProfile, profile_object_in_browser_storage_value
+            ) -> EntityProfile:
+                if profile_object_in_browser_storage_value is not None:
+                    profile = EntityProfile.model_validate(
+                        profile_object_in_browser_storage_value
+                    )
+                    gr.Info(
+                        message=f"Profile '{profile.name.namespace.upper()}, {' '.join(profile.name.other_names)}' loaded from browser storage.",
+                    )
+                else:
+                    profile = EntityProfile.create_random_profile()
+                    gr.Info(
+                        message=f"Using randomly generated profile '{profile.name.namespace.upper()}, {' '.join(profile.name.other_names)}' since none found in browser storage.",
+                    )
+                return (
+                    profile,
+                    gr.update(value=profile) if profile else None,
+                )
+
+            @profile_object_in_session.change(
+                inputs=[profile_object_in_session],
+                outputs=[
+                    profile_object_in_browser_storage,
+                ],
+                api_name=False,
+            )
+            def profile_object_in_session_changed(profile: EntityProfile):
+                return gr.update(value=profile)
+
             with gr.Tab(label="Text transformations"):
                 self.component_text_transformation()
 
@@ -417,4 +729,6 @@ if __name__ == "__main__":
     ic(load_dotenv())
     app = GradioApp()
     print(subprocess.check_output(["gradio", "environment"]).decode())
-    app.construct_ui().queue().launch(server_name="0.0.0.0", share=False)
+    app.construct_ui().queue().launch(
+        server_name="0.0.0.0", share=False, ssr_mode=False
+    )

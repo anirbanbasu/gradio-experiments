@@ -5,8 +5,14 @@ from typing import Any
 class Constants:
     """A class to hold constants used in the library. This class can be subclassed to add more constants."""
 
+    EMPTY_STRING = ""
+    """An empty string."""
+
     SPACE_STRING = " "
     """The space character."""
+
+    COMMA = ","
+    """The comma character."""
 
     TRUE_VALUES_LIST = ["true", "yes", "t", "y", "on"]
     """A list of string values that are considered as True."""
@@ -16,6 +22,12 @@ class Constants:
 
     EMPTY_DICT = {}
     """An empty dictionary."""
+
+    CRLF = "\r\n"
+    """The carriage return and line feed characters."""
+
+    LF = "\n"
+    """The line feed character."""
 
 
 def parse_env(

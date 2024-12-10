@@ -15,6 +15,7 @@ exclude = [ "src/app.py", "src/data.py", "src/utils.py" ]
 [tool.poetry.dependencies]
 python = "^3.10"
 pydantic = "^2.9.2"
+randomname = "^0.2.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.3.4"
