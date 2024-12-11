@@ -437,6 +437,7 @@ class GradioApp:
                                 info="Enter the credits for the image (optional).",
                                 interactive=True,
                             )
+                btn_update_profile = gr.Button("Update profile", variant="primary")
 
             @tab_edit.select(
                 inputs=[
@@ -518,89 +519,70 @@ class GradioApp:
             def tab_json_view_selected(profile: EntityProfile) -> EntityProfile:
                 return profile.model_dump() if profile else None
 
-            @text_profile_name_namespace.input(
-                inputs=[text_profile_name_namespace, profile_object_in_session],
+            @btn_update_profile.click(
+                inputs=[
+                    text_profile_name_namespace,
+                    text_profile_name_other_names,
+                    file_image_profile,
+                    text_image_caption,
+                    text_image_credits,
+                    profile_object_in_session,
+                ],
                 outputs=[profile_object_in_session],
                 api_name=False,
             )
-            def text_profile_name_namespace_input(
-                namespace: str, profile_object_in_session_value: EntityProfile
+            def btn_update_profile_clicked(
+                namespace: str,
+                other_names: str,
+                image_data: bytes,
+                caption: str,
+                credits: str,
+                profile_object_in_session_value: EntityProfile,
             ):
                 if profile_object_in_session_value:
                     profile_object_in_session_value.name.namespace = namespace
-                return profile_object_in_session_value
-
-            @text_profile_name_other_names.input(
-                inputs=[text_profile_name_other_names, profile_object_in_session],
-                outputs=[profile_object_in_session],
-                api_name=False,
-            )
-            def text_profile_name_other_names_input(
-                other_names: str, profile_object_in_session_value: EntityProfile
-            ):
-                if profile_object_in_session_value:
                     profile_object_in_session_value.name.other_names = (
                         other_names.split()
                     )
+                    if image_data:
+                        profile_object_in_session_value.representative_image = (
+                            ProfileImage(
+                                data=base64.b64encode(image_data).decode("ascii"),
+                                caption=caption,
+                                credits=credits,
+                            )
+                        )
+                    else:
+                        if (
+                            profile_object_in_session_value.representative_image is None
+                            and (
+                                caption is not Constants.EMPTY_STRING
+                                or credits is not Constants.EMPTY_STRING
+                            )
+                        ):
+                            gr.Warning(
+                                "A representative image is required if you want to add its caption or credits."
+                            )
+                        elif (
+                            profile_object_in_session_value.representative_image
+                            is not None
+                        ):
+                            profile_object_in_session_value.representative_image.caption = caption
+                            profile_object_in_session_value.representative_image.credits = credits
                 return profile_object_in_session_value
 
             @file_image_profile.upload(
-                inputs=[file_image_profile, profile_object_in_session],
-                outputs=[profile_object_in_session, image_profile_preview],
+                inputs=[file_image_profile],
+                outputs=[image_profile_preview],
                 api_name=False,
             )
-            def image_profile_uploaded(
-                image_data: bytes, profile_object_in_session_value: EntityProfile
-            ):
-                if profile_object_in_session_value:
-                    profile_object_in_session_value.representative_image = ProfileImage(
-                        data=base64.b64encode(image_data).decode("ascii")
-                    )
-                    return [
-                        profile_object_in_session_value,
-                        gr.update(
-                            visible=True if image_data else False,
-                            value=(
-                                PIL.Image.open(io.BytesIO(image_data))
-                                if image_data
-                                else None
-                            ),
-                        ),
-                    ]
-                else:
-                    return [None, gr.update(visible=False, value=None)]
-
-            @text_image_caption.input(
-                inputs=[text_image_caption, profile_object_in_session],
-                outputs=[profile_object_in_session],
-            )
-            def text_image_caption_input(
-                caption: str, profile_object_in_session_value: EntityProfile
-            ):
-                if profile_object_in_session_value:
-                    if profile_object_in_session_value.representative_image:
-                        profile_object_in_session_value.representative_image.caption = (
-                            caption
-                        )
-                    else:
-                        gr.Warning("Upload an image first to add a caption!")
-                return profile_object_in_session_value
-
-            @text_image_credits.input(
-                inputs=[text_image_credits, profile_object_in_session],
-                outputs=[profile_object_in_session],
-            )
-            def text_image_credits_input(
-                credits: str, profile_object_in_session_value: EntityProfile
-            ):
-                if profile_object_in_session_value:
-                    if profile_object_in_session_value.representative_image:
-                        profile_object_in_session_value.representative_image.credits = (
-                            credits
-                        )
-                    else:
-                        gr.Warning("Upload an image first to add credits!")
-                return profile_object_in_session_value
+            def image_profile_uploaded(image_data: bytes):
+                return gr.update(
+                    visible=True if image_data else False,
+                    value=(
+                        PIL.Image.open(io.BytesIO(image_data)) if image_data else None
+                    ),
+                )
 
         return component
 
