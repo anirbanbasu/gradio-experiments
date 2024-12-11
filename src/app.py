@@ -361,52 +361,13 @@ class GradioApp:
     def component_pydantic_profiles(
         self,
         profile_object_in_session: gr.State,
-        profile_object_in_browser_storage: gr.BrowserState,
     ) -> gr.Group:
         with gr.Group() as component:
             with gr.Tab(label="View (decorative)") as tab_view_decorative:
-                gr.Markdown(
-                    """
-                        You can view the underlying profile information here as HTML. You can edit the information in the edit tab.
-                        """
-                )
-                with gr.Group():
-                    pass
-            with gr.Tab(label="View (JSON)") as tab_json_view:
-                gr.Markdown(
-                    """
-                        You can view the underlying profile information here as JSON. You can edit the information in the edit tab.
-                        """
-                )
-                with gr.Group():
-                    json_view = gr.JSON()
-
-            with gr.Tab(label="Edit") as tab_edit:
-                gr.Markdown(
-                    """
-                        You can edit the underlying profile information here and view it in the other tabs.
-                        """
-                )
-                with gr.Group():
-                    with gr.Row(equal_height=True):
-                        text_profile_name_namespace = gr.Textbox(
-                            label="Namespace",
-                            info="Enter the namespace of the profile.",
-                            value=(
-                                profile_object_in_session.value.name.namespace
-                                if profile_object_in_session.value
-                                else Constants.EMPTY_STRING
-                            ),
-                        )
-                        text_profile_name_other_names = gr.TextArea(
-                            label="Other names",
-                            info="Enter the other names of the profile, one per line.",
-                            max_lines=10,
-                            interactive=True,
-                        )
-                    with gr.Row(equal_height=True):
-                        image_profile_preview = gr.Image(
-                            label="Preview",
+                with gr.Row(equal_height=True):
+                    with gr.Column():
+                        image_profile = gr.Image(
+                            label="Representative image",
                             type="pil",
                             height=256,
                             width=256,
@@ -414,29 +375,64 @@ class GradioApp:
                             show_download_button=False,
                             show_fullscreen_button=False,
                             show_share_button=False,
+                            container=False,
                             visible=False,
                         )
-                        file_image_profile = gr.File(
-                            type="binary",
-                            file_types=[
-                                ".png",
-                                ".jpg",
-                                ".jpeg",
-                                ".gif",
-                            ],
-                            label="Profile image (upload to replace existing, if any): minimum 256x256 pixels",
+                        md_image_info = gr.Markdown()
+                    md_profile = gr.Markdown()
+            with gr.Tab(label="View (JSON)") as tab_json_view:
+                json_view = gr.JSON()
+
+            with gr.Tab(label="Edit") as tab_edit:
+                with gr.Row(equal_height=True):
+                    text_profile_name_namespace = gr.Textbox(
+                        label="Namespace",
+                        info="Enter the namespace of the profile.",
+                        value=(
+                            profile_object_in_session.value.name.namespace
+                            if profile_object_in_session.value
+                            else Constants.EMPTY_STRING
+                        ),
+                    )
+                    text_profile_name_other_names = gr.TextArea(
+                        label="Other names",
+                        info="Enter the other names of the profile, one per line.",
+                        max_lines=10,
+                        interactive=True,
+                    )
+                with gr.Row(equal_height=True):
+                    image_profile_preview = gr.Image(
+                        label="Preview",
+                        type="pil",
+                        height=256,
+                        width=256,
+                        show_label=False,
+                        show_download_button=False,
+                        show_fullscreen_button=False,
+                        show_share_button=False,
+                        visible=False,
+                    )
+                    file_image_profile = gr.File(
+                        type="binary",
+                        file_types=[
+                            ".png",
+                            ".jpg",
+                            ".jpeg",
+                            ".gif",
+                        ],
+                        label="Profile image (upload to replace existing, if any): minimum 256x256 pixels",
+                    )
+                    with gr.Column():
+                        text_image_caption = gr.Textbox(
+                            label="Image caption",
+                            info="Enter the caption of the image (optional).",
+                            interactive=True,
                         )
-                        with gr.Column():
-                            text_image_caption = gr.Textbox(
-                                label="Image caption",
-                                info="Enter the caption of the image (optional).",
-                                interactive=True,
-                            )
-                            text_image_credits = gr.Textbox(
-                                label="Image credits",
-                                info="Enter the credits for the image (optional).",
-                                interactive=True,
-                            )
+                        text_image_credits = gr.Textbox(
+                            label="Image credits",
+                            info="Enter the credits for the image (optional).",
+                            interactive=True,
+                        )
                 btn_update_profile = gr.Button("Update profile", variant="primary")
 
             @tab_edit.select(
@@ -505,12 +501,6 @@ class GradioApp:
                         Constants.EMPTY_STRING,
                     ]
 
-            @tab_view_decorative.select(
-                inputs=[profile_object_in_session],
-            )
-            def tab_view_decorative_selected(profile: EntityProfile):
-                return None
-
             @tab_json_view.select(
                 inputs=[profile_object_in_session],
                 outputs=[json_view],
@@ -518,6 +508,43 @@ class GradioApp:
             )
             def tab_json_view_selected(profile: EntityProfile) -> EntityProfile:
                 return profile.model_dump() if profile else None
+
+            @tab_view_decorative.select(
+                inputs=[profile_object_in_session],
+                outputs=[image_profile, md_image_info, md_profile],
+            )
+            def tab_view_decorative_selected(profile: EntityProfile):
+                if profile:
+                    if profile.representative_image:
+                        image_bytes = base64.b64decode(
+                            profile.representative_image.data.encode("ascii")
+                        )
+                        return [
+                            gr.update(
+                                value=PIL.Image.open(io.BytesIO(image_bytes)),
+                                visible=True,
+                            ),
+                            (
+                                f"""**{profile.representative_image.caption}**
+
+                                _Credits: {profile.representative_image.credits}_"""
+                                if profile.representative_image.caption
+                                or profile.representative_image.credits
+                                else None
+                            ),
+                            f"""## {profile.name.namespace}
+
+                            {' '.join(profile.name.other_names)}""",
+                        ]
+                    else:
+                        return [
+                            gr.update(value=None, visible=False),
+                            None,
+                            f"""## {profile.name.namespace}
+
+                            {' '.join(profile.name.other_names)}""",
+                        ]
+                return [gr.update(value=None, visible=False), None, None]
 
             @btn_update_profile.click(
                 inputs=[
@@ -656,9 +683,7 @@ class GradioApp:
                         This component experiments with profile information backed by Pydantic models. _More explanation will be added._
                         """
                     )
-                self.component_pydantic_profiles(
-                    profile_object_in_session, profile_object_in_browser_storage
-                )
+                self.component_pydantic_profiles(profile_object_in_session)
 
             @tab_pydantic_profiles.select(
                 inputs=[
