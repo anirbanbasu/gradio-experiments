@@ -4,12 +4,12 @@ emoji: 🔬
 colorFrom: gray
 colorTo: blue
 sdk: gradio
-sdk_version: 5.8.0
+sdk_version: 5.9.1
 suggested_hardware: cpu-basic
 app_file: src/app.py
 pinned: true
 disable_embedding: true
-license: gpl-3.0
+license: mit
 ---
 
 [![Sync to Hugging Face hub](https://github.com/anirbanbasu/gradio-experiments/actions/workflows/hfspaces.yml/badge.svg)](https://github.com/anirbanbasu/gradio-experiments/actions/workflows/hfspaces.yml) ![Status experimental](https://img.shields.io/badge/Status-experimental-yellow)
