@@ -534,7 +534,7 @@ class GradioApp:
                             ),
                             f"""## {profile.name.namespace}
 
-                            {' '.join(profile.name.other_names)}""",
+                            {" ".join(profile.name.other_names)}""",
                         ]
                     else:
                         return [
@@ -542,7 +542,7 @@ class GradioApp:
                             None,
                             f"""## {profile.name.namespace}
 
-                            {' '.join(profile.name.other_names)}""",
+                            {" ".join(profile.name.other_names)}""",
                         ]
                 return [gr.update(value=None, visible=False), None, None]
 
