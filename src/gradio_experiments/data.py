@@ -7,7 +7,11 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from utils import Constants
+try:
+    from gradio_experiments.utils import Constants
+except ImportError:
+    # Fallback import for runs where the current project is not installed in the venv
+    from utils import Constants
 
 import randomname as rn
 

@@ -16,18 +16,33 @@ from dotenv import load_dotenv
 #     os.system("pip install -e .")
 #     from dotenv import load_dotenv
 
-from utils import (
-    AppConstants,
-    EnvironmentVariables,
-    parse_env,
-    ic,
-)
-from data import (
-    ProfileImage,
-    StateData,
-    EntityProfile,
-    PydanticEncapsulator,
-)
+try:
+    from gradio_experiments.utils import (
+        AppConstants,
+        EnvironmentVariables,
+        parse_env,
+        ic,
+    )
+    from gradio_experiments.data import (
+        ProfileImage,
+        StateData,
+        EntityProfile,
+        PydanticEncapsulator,
+    )
+except ImportError:
+    # Fallback import for runs where the current project is not installed in the venv
+    from utils import (
+        AppConstants,
+        EnvironmentVariables,
+        parse_env,
+        ic,
+    )
+    from data import (
+        ProfileImage,
+        StateData,
+        EntityProfile,
+        PydanticEncapsulator,
+    )
 
 import polars as pl
 

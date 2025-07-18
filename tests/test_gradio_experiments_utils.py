@@ -1,5 +1,11 @@
 import math
-from utils import parse_env
+
+try:
+    from gradio_experiments.utils import parse_env
+except ImportError:
+    # Fallback import for runs where the current project is not installed in the venv
+    from utils import parse_env
+
 from uuid import uuid4
 
 
