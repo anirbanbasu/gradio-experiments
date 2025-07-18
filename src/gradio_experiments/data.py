@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from gradio_experiments.utils import Constants
+from utils import Constants
 
 import randomname as rn
 

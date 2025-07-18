@@ -16,8 +16,13 @@ from dotenv import load_dotenv
 #     os.system("pip install -e .")
 #     from dotenv import load_dotenv
 
-from gradio_experiments.utils import AppConstants, EnvironmentVariables, parse_env, ic
-from gradio_experiments.data import (
+from utils import (
+    AppConstants,
+    EnvironmentVariables,
+    parse_env,
+    ic,
+)
+from data import (
     ProfileImage,
     StateData,
     EntityProfile,

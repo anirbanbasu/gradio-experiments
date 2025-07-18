@@ -1,5 +1,5 @@
 import math
-from gradio_experiments.utils import parse_env
+from utils import parse_env
 from uuid import uuid4
 
 
