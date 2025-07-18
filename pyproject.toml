@@ -8,7 +8,7 @@ authors = [
 ]
 repository = "https://github.com/anirbanbasu/gradio-experiments"
 keywords = ["gradio", "gradio-experiments", "utilities", "ui", "web"]
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
     "asyncer>=0.0.8",
     "gradio>=5.38.0",
