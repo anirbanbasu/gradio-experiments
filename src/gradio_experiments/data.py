@@ -7,9 +7,42 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from gradio_experiments_utils.utils import Constants
+from gradio_experiments.utils import Constants
 
 import randomname as rn
+
+
+class SomePydanticNestedModel(BaseModel):
+    """An example Pydantic model used in some other Pydantic model for nesting."""
+
+    name: str
+    time: float
+
+
+class APydanticModel(BaseModel):
+    """An example Pydantic model with various fields."""
+
+    text: str
+    number: int
+    my_object: SomePydanticNestedModel
+
+
+class PydanticEncapsulator:
+    """A class to encapsulate a Pydantic model and provide a string representation of it."""
+
+    def __init__(self, text: str = "Hello", number: int = 221, name: str = "Sherlock"):
+        """Create a new instance of the PydanticEncapsulator class."""
+        self._pydantic_model = APydanticModel(
+            text=text,
+            number=number,
+            my_object=SomePydanticNestedModel(
+                name=name,
+                time=datetime.datetime.now().timestamp(),
+            ),
+        )
+
+    def __str__(self):
+        return self._pydantic_model.model_dump_json(indent=4)
 
 
 class SomePydanticModel(BaseModel):

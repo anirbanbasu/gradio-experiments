@@ -1,6 +1,11 @@
 import os
 from typing import Any
 
+try:
+    from icecream import ic
+except ImportError:  # Graceful fallback if IceCream isn't installed.
+    ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
+
 
 class Constants:
     """A class to hold constants used in the library. This class can be subclassed to add more constants."""
@@ -69,3 +74,18 @@ def parse_env(
         else [type_cast(v) for v in parsed_value.split(list_split_char)]
     )
     return value
+
+
+class AppConstants(Constants):
+    FILE_EXTENSION_CSV = ".csv"
+    FILE_EXTENSION_JSON = ".json"
+    FILE_EXTENSION_PARQUET = ".parquet"
+    ALLOWED_DATASET_FILE_EXTENSIONS = [
+        FILE_EXTENSION_CSV,
+        FILE_EXTENSION_JSON,
+        FILE_EXTENSION_PARQUET,
+    ]
+
+
+class EnvironmentVariables:
+    LOCAL_STORAGE_ENCRYPTION_KEY = "LOCAL_STORAGE_ENCRYPTION_KEY"

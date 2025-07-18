@@ -1,28 +1,36 @@
-[tool.poetry]
-name = "gradio-experiments-utils"
+[project]
+name = "gradio-experiments"
 version = "0.1.0"
-description = "An almost unnecessary utilities package for gradio-experiments."
-authors = ["Anirban Basu <anirbanbasu@users.noreply.github.com>"]
-license = "MIT"
+description = "Experiments with Gradio."
 readme = "README.md"
+authors = [
+    { name = "Anirban Basu", email = "anirbanbasu@users.noreply.github.com" }
+]
 repository = "https://github.com/anirbanbasu/gradio-experiments"
 keywords = ["gradio", "gradio-experiments", "utilities", "ui", "web"]
-packages = [
-    { include = "src" }
+requires-python = ">=3.12"
+dependencies = [
+    "asyncer>=0.0.8",
+    "gradio>=5.38.0",
+    "kagglehub>=0.3.12",
+    "polars>=1.31.0",
+    "pyarrow>=21.0.0",
+    "python-dotenv>=1.1.1",
+    "randomname>=0.2.1",
 ]
-exclude = [ "src/app.py", "src/data.py", "src/utils.py" ]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-pydantic = "^2.9.2"
-randomname = "^0.2.1"
-
-[tool.poetry.dev-dependencies]
-pytest = "^8.3.4"
+[project.scripts]
+gre = "gradio_experiments.app:main"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.pytest.ini_options]
-pythonpath = "src"
+[dependency-groups]
+dev = [
+    "icecream>=2.1.5",
+    "pre-commit>=4.2.0",
+]
+test = [
+    "pytest>=8.4.1",
+]

@@ -9,26 +9,22 @@ import PIL.Image
 import gradio as gr
 
 # See why we are doing this with the local package: https://discuss.huggingface.co/t/custom-python-packages-at-spaces/17250/6
-try:
-    from dotenv import load_dotenv
-except ImportError:
-    os.system("pip install -e .")
-    from dotenv import load_dotenv
+# try:
+from dotenv import load_dotenv
 
-from utils import AppConstants, EnvironmentVariables
-from gradio_experiments_utils.utils import Constants, parse_env
-from gradio_experiments_utils.data import (
+# except ImportError:
+#     os.system("pip install -e .")
+#     from dotenv import load_dotenv
+
+from gradio_experiments.utils import AppConstants, EnvironmentVariables, parse_env, ic
+from gradio_experiments.data import (
     ProfileImage,
     StateData,
     EntityProfile,
+    PydanticEncapsulator,
 )
 
 import polars as pl
-
-try:
-    from icecream import ic
-except ImportError:  # Graceful fallback if IceCream isn't installed.
-    ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
 
 
 class GradioApp:
@@ -391,7 +387,7 @@ class GradioApp:
                         value=(
                             profile_object_in_session.value.name.namespace
                             if profile_object_in_session.value
-                            else Constants.EMPTY_STRING
+                            else AppConstants.EMPTY_STRING
                         ),
                     )
                     text_profile_name_other_names = gr.TextArea(
@@ -462,11 +458,11 @@ class GradioApp:
                         profile.name.namespace,
                         (
                             gr.update(
-                                value=Constants.CRLF.join(profile.name.other_names),
+                                value=AppConstants.CRLF.join(profile.name.other_names),
                                 lines=len(profile.name.other_names),
                             )
                             if profile.name.other_names
-                            else Constants.EMPTY_STRING
+                            else AppConstants.EMPTY_STRING
                         ),
                         None,
                         gr.update(
@@ -480,25 +476,25 @@ class GradioApp:
                         (
                             profile.representative_image.caption
                             if profile.representative_image
-                            else Constants.EMPTY_STRING
+                            else AppConstants.EMPTY_STRING
                         ),
                         (
                             profile.representative_image.credits
                             if profile.representative_image
-                            else Constants.EMPTY_STRING
+                            else AppConstants.EMPTY_STRING
                         ),
                     ]
                 else:
                     return [
-                        Constants.EMPTY_STRING,
-                        Constants.EMPTY_STRING,
+                        AppConstants.EMPTY_STRING,
+                        AppConstants.EMPTY_STRING,
                         None,
                         gr.update(
                             visible=False,
                             value=None,
                         ),
-                        Constants.EMPTY_STRING,
-                        Constants.EMPTY_STRING,
+                        AppConstants.EMPTY_STRING,
+                        AppConstants.EMPTY_STRING,
                     ]
 
             @tab_json_view.select(
@@ -583,8 +579,8 @@ class GradioApp:
                         if (
                             profile_object_in_session_value.representative_image is None
                             and (
-                                caption is not Constants.EMPTY_STRING
-                                or credits is not Constants.EMPTY_STRING
+                                caption is not AppConstants.EMPTY_STRING
+                                or credits is not AppConstants.EMPTY_STRING
                             )
                         ):
                             gr.Warning(
@@ -610,6 +606,41 @@ class GradioApp:
                         PIL.Image.open(io.BytesIO(image_data)) if image_data else None
                     ),
                 )
+
+        return component
+
+    def component_json_formatting(self) -> gr.Group:
+        with gr.Group() as component:
+            encapsulated_pydantic_state_obj = gr.State(None)
+            json_input = gr.JSON()
+            btn_load_encapsulated_object = gr.Button(
+                value="Load encapsulated Pydantic object for this session",
+                variant="primary",
+            )
+
+            @btn_load_encapsulated_object.click(
+                inputs=[encapsulated_pydantic_state_obj],
+                outputs=[encapsulated_pydantic_state_obj],
+                api_name=False,
+            )
+            def load_encapsulated_object(
+                encapsulated_pydantic_obj: PydanticEncapsulator,
+            ):
+                """Load the encapsulated Pydantic object."""
+                if encapsulated_pydantic_obj is None:
+                    encapsulated_pydantic_obj = PydanticEncapsulator()
+                return encapsulated_pydantic_obj
+
+            @encapsulated_pydantic_state_obj.change(
+                inputs=[encapsulated_pydantic_state_obj],
+                outputs=[json_input],
+                api_name=False,
+            )
+            def encapsulated_pydantic_state_obj_changed(
+                encapsulated_pydantic_obj: PydanticEncapsulator,
+            ):
+                """Update the JSON input with the encapsulated Pydantic object."""
+                return encapsulated_pydantic_obj
 
         return component
 
@@ -726,16 +757,29 @@ class GradioApp:
             def profile_object_in_session_changed(profile: EntityProfile):
                 return gr.update(value=profile)
 
+            with gr.Tab(label="JSON formatting"):
+                with gr.Accordion(label="Explanation", open=True):
+                    gr.Markdown(
+                        """
+                        This component experiments with JSON formatting. As of version 5.38.0, Gradio's JSON component is unable to correctly display a pretty-printed JSON string.
+                        """
+                    )
+                self.component_json_formatting()
+
             with gr.Tab(label="Text transformations"):
                 self.component_text_transformation()
 
         return ui
 
 
-if __name__ == "__main__":
+def main():
     ic(load_dotenv())
     app = GradioApp()
     print(subprocess.check_output(["gradio", "environment"]).decode())
     app.construct_ui().queue().launch(
         server_name="0.0.0.0", share=False, ssr_mode=False
     )
+
+
+if __name__ == "__main__":
+    main()

@@ -4,9 +4,9 @@ emoji: 🔬
 colorFrom: gray
 colorTo: blue
 sdk: gradio
-sdk_version: 5.19.0
+sdk_version: 5.38.0
 suggested_hardware: cpu-basic
-app_file: src/app.py
+app_file: src/gradio_experiments/app.py
 pinned: true
 disable_embedding: true
 license: mit
@@ -29,9 +29,9 @@ You can specify the following environment variables in a `.env`, for example. In
 
 ## Installation and use
 
-Create a Python virtual environment for Python 3.12.0 or above. In that virtual environment, run `pip install -U -r requirements.txt`. (You can clean everything you have installed in that environment by running `python -m pip freeze | cut -d "@" -f1 | xargs pip uninstall -y`.) Once all the packages are installed, you can start the Gradio server by running `python src/app.py`. If the server is able to start without any problem, it will be listening to port 7860 on any IP address of your network adapter. You will be able to see the web interface on your localhost at http://127.0.0.1:7860/.
+Install [`uv`](https://docs.astral.sh/uv/getting-started/installation/). Then, run `uv sync` (with the `--all-groups` flag to install developer and test dependencies). Once dependencies are installed, you can start the Gradio server by running `uv run gre` or `uv run python src/gradio_experiments/app.py`. If the server is able to start without any problem, it will be listening to port 7860 on any IP address of your network adapter. You will be able to see the web interface on your localhost at http://127.0.0.1:7860/.
 
-A public deployment may be available through Huggingface Spaces.
+A public deployment may be available through Huggingface Spaces at: https://huggingface.co/spaces/anirbanbasu/gradio-experiments.
 
 ## Status
 
@@ -39,6 +39,7 @@ The following features have been or are being implemented.
 
 | Feature | Description | Status |
 |---------|-------------|--------|
+| JSON display | The JSON component is unable to display a formatted JSON string correctly. | Bug reported (see: https://github.com/gradio-app/gradio/issues/11592) |
 | State management | Demonstration of global, session and browser (local) states. | Completed |
 | Datasets | Experimentation with datasets and data frames. | Preliminary stage |
 | Pydantic enitity profile | Experimentation with Pydantic based entity profiles. | Partially implemented |
