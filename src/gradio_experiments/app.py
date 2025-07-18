@@ -781,7 +781,25 @@ class GradioApp:
                 with gr.Accordion(label="Explanation", open=True):
                     gr.Markdown(
                         """
-                        This component experiments with JSON formatting. As of version 5.38.0, Gradio's JSON component is unable to correctly display a pretty-printed JSON string.
+                        This component experiments with JSON formatting.
+
+                        As of version 5.38.0, Gradio's JSON component is unable to correctly display a pretty-printed JSON string. Instead of displaying
+                        the JSON string as a formatted dictionary or list, it displays it as a single line of text. For example, a JSON string will be displayed
+                        as follows:
+                        ```json
+                        "{ "text": "Hello", "number": 221, "my_object": { "name": "Sherlock", "time": 1752809241.129743 } }"
+                        ```
+                        instead of:
+                        ```json
+                        {
+                            "text": "Hello",
+                            "number": 221,
+                            "my_object": {
+                                "name": "Sherlock",
+                                "time": 1752809241.129743
+                            }
+                        }
+                        ```
                         """
                     )
                 self.component_json_formatting()
