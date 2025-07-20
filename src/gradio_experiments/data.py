@@ -8,10 +8,10 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 
 try:
-    from gradio_experiments.utils import Constants
+    from gradio_experiments.utils import Constants, ic  # noqa: F401
 except ImportError:
     # Fallback import for runs where the current project is not installed in the venv
-    from utils import Constants
+    from utils import Constants, ic  # noqa: F401
 
 import randomname as rn
 
@@ -46,7 +46,21 @@ class PydanticEncapsulator:
         )
 
     def __str__(self):
+        """
+        Nicely formatted JSON string of the encapsulated Pydantic model.
+        Returns:
+            str: A JSON string representation of the encapsulated Pydantic model.
+        """
         return self._pydantic_model.model_dump_json(indent=4)
+
+    def __dict__(self):
+        """
+        Convert the encapsulated Pydantic model to a dictionary.
+
+        Returns:
+            dict: A dictionary representation of the encapsulated Pydantic model.
+        """
+        return self._pydantic_model.model_dump()
 
 
 class SomePydanticModel(BaseModel):
