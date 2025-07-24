@@ -10,6 +10,7 @@ app_file: src/gradio_experiments/app.py
 pinned: true
 disable_embedding: true
 license: mit
+short_description: A collection of feature experiments with Gradio
 ---
 
 [![Sync to Hugging Face hub](https://github.com/anirbanbasu/gradio-experiments/actions/workflows/hfspaces.yml/badge.svg)](https://github.com/anirbanbasu/gradio-experiments/actions/workflows/hfspaces.yml) ![Status experimental](https://img.shields.io/badge/Status-experimental-yellow)
