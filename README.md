@@ -4,7 +4,7 @@ emoji: 🔬
 colorFrom: gray
 colorTo: blue
 sdk: gradio
-sdk_version: 5.38.0
+sdk_version: 5.38.1
 suggested_hardware: cpu-basic
 app_file: src/gradio_experiments/app.py
 pinned: true
@@ -39,7 +39,7 @@ The following features have been or are being implemented.
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| JSON display | The JSON component is unable to display a formatted JSON string correctly. | Bug reported (see: https://github.com/gradio-app/gradio/issues/11592) |
+| JSON display | The JSON component is unable to display a formatted JSON string correctly. | Bug reported in [issue 11592](https://github.com/gradio-app/gradio/issues/11592) and fixed in [pull request 11608](https://github.com/gradio-app/gradio/pull/11608). |
 | State management | Demonstration of global, session and browser (local) states. | Completed |
 | Datasets | Experimentation with datasets and data frames. | Preliminary stage |
 | Pydantic enitity profile | Experimentation with Pydantic based entity profiles. | Partially implemented |

@@ -59,10 +59,11 @@ def parse_env(
         (Any | list[Any]) The parsed value, either as a single value or a list. The type of the returned single
         value or individual elements in the list depends on the supplied type_cast parameter.
     """
-    if default_value is not None and not isinstance(default_value, type_cast):
-        raise TypeError(
-            f"The default value {default_value} specified for the environment variable {var_name} is of type {type(default_value).__name__}. However, the expected type is {type_cast.__name__} instead."
-        )
+    # FIXME: This check is not needed, as the type_cast will handle the conversion for the parsed_value.
+    # if default_value is not None and not isinstance(default_value, type_cast):
+    #     raise TypeError(
+    #         f"The default value {default_value} specified for the environment variable {var_name} is of type {type(default_value).__name__}. However, the expected type is {type_cast.__name__} instead."
+    #     )
     if os.getenv(var_name) is None and default_value is None:
         raise ValueError(
             f"Environment variable {var_name} does not exist and a default value has not been provided."

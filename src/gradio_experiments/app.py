@@ -800,6 +800,8 @@ class GradioApp:
                             }
                         }
                         ```
+
+                        The [pull request 11608](https://github.com/gradio-app/gradio/pull/11608) accepted in Gradio version 5.38.1 fixes this issue.
                         """
                     )
                 self.component_json_formatting()
