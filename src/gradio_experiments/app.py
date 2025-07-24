@@ -815,10 +815,12 @@ class GradioApp:
 def main():
     ic(load_dotenv())
     app = GradioApp()
-    print(subprocess.check_output(["gradio", "environment"]).decode())
+    # print(subprocess.check_output(["gradio", "environment"]).decode())
+    p = subprocess.Popen(["gradio", "environment"])
     app.construct_ui().queue().launch(
         server_name="0.0.0.0", share=False, ssr_mode=False
     )
+    p.terminate()
 
 
 if __name__ == "__main__":
