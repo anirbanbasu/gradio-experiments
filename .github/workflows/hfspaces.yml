@@ -14,10 +14,18 @@ jobs:
         with:
           fetch-depth: 0
           lfs: true
-      - name: Pull from hub
+      - name: Add HF Spaces remote
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git pull --ff-only https://anirbanbasu:$HF_TOKEN@huggingface.co/spaces/anirbanbasu/gradio-experiments main
+        run: git remote add https://anirbanbasu:$HF_TOKEN@huggingface.co/spaces/anirbanbasu/gradio-experiments hfspaces
+      - name: Fetch from hub
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: git fetch hfspaces
+      - name: Merge with hub changes
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: git merge hfspaces/main
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
