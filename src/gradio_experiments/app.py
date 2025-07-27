@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import signal
 import subprocess
 import sys
 import platform
@@ -237,7 +238,8 @@ class GradioApp:
                 ),
             )
 
-        @btn_refresh_states.click(
+        @gr.on(
+            triggers=[btn_refresh_states.click, self.interface.load],
             inputs=[session_state, browser_state],
             outputs=[
                 json_global_state,
@@ -675,7 +677,7 @@ class GradioApp:
                 font=gr.themes.GoogleFont("Lato", weights=(100, 300)),
                 font_mono=gr.themes.GoogleFont("IBM Plex Mono", weights=(100, 300)),
             ),
-        ) as ui:
+        ) as self.interface:
             gr.Markdown(
                 f"""
                 # gradio-experiments
@@ -809,16 +811,36 @@ class GradioApp:
             with gr.Tab(label="Text transformations"):
                 self.component_text_transformation()
 
-        return ui
+        return self.interface
+
+    def shutdown(self):
+        """Shutdown the Gradio app."""
+        # Do some cleanup as needed
+        if self.interface is not None and self.interface.is_running:
+            self.interface.close()
 
 
 def main():
     ic(load_dotenv())
     app = GradioApp()
-    # print(subprocess.check_output(["gradio", "environment"]).decode())
+
+    def sigint_handler(signal, frame):
+        """
+        Signal handler to shut down the server gracefully.
+        """
+        print("Attempting graceful shutdown, please wait...")
+        app.shutdown()
+        # Is it necessary to call close on all interfaces?
+        gr.close_all()
+        # This is absolutely necessary to exit the program
+        sys.exit(0)
+
+    # TODO: Should we also catch SIGTERM, SIGKILL, etc.? What about Windows?
+    signal.signal(signal.SIGINT, sigint_handler)
+
     p = subprocess.Popen(["gradio", "environment"])
     app.construct_ui().queue().launch(
-        server_name="0.0.0.0", share=False, ssr_mode=False
+        server_name="0.0.0.0", share=False, ssr_mode=False, show_api=False
     )
     p.terminate()
 
