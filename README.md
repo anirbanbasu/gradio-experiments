@@ -4,7 +4,7 @@ emoji: 🔬
 colorFrom: gray
 colorTo: blue
 sdk: gradio
-sdk_version: 5.38.1
+sdk_version: 5.38.2
 suggested_hardware: cpu-basic
 app_file: src/gradio_experiments/app.py
 pinned: true
