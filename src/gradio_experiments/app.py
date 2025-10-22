@@ -11,7 +11,6 @@ import gradio as gr
 
 # See why we are doing this with the local package: https://discuss.huggingface.co/t/custom-python-packages-at-spaces/17250/6
 # try:
-from dotenv import load_dotenv
 
 # except ImportError:
 #     os.system("pip install -e .")
@@ -21,7 +20,6 @@ try:
     from gradio_experiments.utils import (
         AppConstants,
         EnvironmentVariables,
-        ic,
     )
     from gradio_experiments.data import (
         ProfileImage,
@@ -34,7 +32,6 @@ except ImportError:
     from utils import (
         AppConstants,
         EnvironmentVariables,
-        ic,
     )
     from data import (
         ProfileImage,
@@ -813,7 +810,6 @@ class GradioApp:
 
 
 def main():
-    ic(load_dotenv())
     app = GradioApp()
 
     def sigint_handler(signal, frame):

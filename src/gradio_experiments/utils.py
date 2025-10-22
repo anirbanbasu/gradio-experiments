@@ -9,7 +9,7 @@ except ImportError:  # Graceful fallback if IceCream isn't installed.
 
 
 env = Env()
-env.read_env()
+ic(env.read_env())
 
 
 class Constants:

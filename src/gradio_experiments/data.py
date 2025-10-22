@@ -53,7 +53,7 @@ class PydanticEncapsulator:
         """
         return self._pydantic_model.model_dump_json(indent=4)
 
-    def __dict__(self):
+    def __dict__(self):  # type: ignore[override]
         """
         Convert the encapsulated Pydantic model to a dictionary.
 
@@ -86,25 +86,20 @@ class SomeTask:
 class StateData:
     """A class to hold the state data for the application."""
 
-    def __init__(self, create_uninitialised: bool = False, an_object: SomeTask = None):
+    def __init__(self, an_object: SomeTask | None = None):
         """
         Create a new instance of the StateData class.
 
         Args:
-            create_uninitialised (bool): Whether to create the object with uninitialised values. Defaults to False.
             an_object (SomeTask): An instance of the SomeTask class. Defaults to None. Specifying this has no effect if create_uninitialised is True.
         """
 
-        if create_uninitialised:
-            self.a_list: List[SomePydanticModel] = None
-            self.a_dict: Dict[str, SomePydanticModel] = None
-            self.a_pydantic_object = None
-            self.an_object = None
-        else:
-            self.a_pydantic_object = SomePydanticModel(a=1, b="default", c=[1, 2, 3, 4])
-            self.an_object = SomeTask() if an_object is None else an_object
-            self.a_list: List[SomePydanticModel] = []
-            self.a_dict: Dict[str, SomePydanticModel] = {}
+        self.a_list: List[SomePydanticModel] = []
+        self.a_dict: Dict[str, SomePydanticModel] = {}
+        self.a_pydantic_object: SomePydanticModel | None = SomePydanticModel(
+            a=1, b="default", c=[1, 2, 3, 4]
+        )
+        self.an_object: SomeTask | None = SomeTask() if an_object is None else an_object
 
     def __hash__(self) -> int:
         """
@@ -116,7 +111,7 @@ class StateData:
         # This is absolutely necessary for gr.State to work, see: https://www.gradio.app/guides/state-in-blocks
         return hash(str(self))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Nicely formatted JSON string of the dictionary representation of this class.
 
@@ -152,7 +147,8 @@ class StateData:
             b=f"changed-{caller}@{now}",
             c=[i for i in range(random.randint(0, 9))],
         )
-        self.an_object.do_task()
+        if self.an_object:
+            self.an_object.do_task()
 
     def reset_from_json(self, json_data: dict):
         """
