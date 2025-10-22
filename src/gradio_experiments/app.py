@@ -21,7 +21,6 @@ try:
     from gradio_experiments.utils import (
         AppConstants,
         EnvironmentVariables,
-        parse_env,
         ic,
     )
     from gradio_experiments.data import (
@@ -35,7 +34,6 @@ except ImportError:
     from utils import (
         AppConstants,
         EnvironmentVariables,
-        parse_env,
         ic,
     )
     from data import (
@@ -128,7 +126,7 @@ class GradioApp:
             browser_state = gr.BrowserState(
                 # default_value=StateData(an_object=self.global_state.an_object),
                 storage_key=self.state_key,
-                secret=parse_env(EnvironmentVariables.LOCAL_STORAGE_ENCRYPTION_KEY),
+                secret=EnvironmentVariables.LOCAL_STORAGE_ENCRYPTION_KEY,
             )
             with gr.Row(equal_height=True):
                 json_global_state = gr.JSON(
@@ -390,9 +388,6 @@ class GradioApp:
                             height=256,
                             width=256,
                             show_label=False,
-                            show_download_button=False,
-                            show_fullscreen_button=False,
-                            show_share_button=False,
                             container=False,
                             visible=False,
                         )
@@ -425,9 +420,6 @@ class GradioApp:
                         height=256,
                         width=256,
                         show_label=False,
-                        show_download_button=False,
-                        show_fullscreen_button=False,
-                        show_share_button=False,
                         visible=False,
                     )
                     file_image_profile = gr.File(
@@ -728,7 +720,7 @@ class GradioApp:
                 profile_object_in_session = gr.State()
                 profile_object_in_browser_storage = gr.BrowserState(
                     storage_key=self.profile_key,
-                    secret=parse_env(EnvironmentVariables.LOCAL_STORAGE_ENCRYPTION_KEY),
+                    secret=EnvironmentVariables.LOCAL_STORAGE_ENCRYPTION_KEY,
                 )
                 with gr.Accordion(label="Explanation", open=True):
                     gr.Markdown(
