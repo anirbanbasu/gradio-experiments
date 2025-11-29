@@ -19,6 +19,8 @@ short_description: A collection of feature experiments with Gradio
 
 A collection of feature experiments with Gradio.
 
+**As of November 29, 2025, this project has been archived. The equivalent Gradio Space referenced from this project will also cease to exist.**
+
 ## Environment variables
 
 You can specify the following environment variables in a `.env`, for example. In addition to those, [Gradio environment variables](https://www.gradio.app/guides/environment-variables) can also be specified but `GRADIO_SERVER_NAME` (set to "0.0.0.0"), `GRADIO_SHARE` (set to False) and `GRADIO_ANALYTICS_ENABLED` (set to False) will be ignored.
